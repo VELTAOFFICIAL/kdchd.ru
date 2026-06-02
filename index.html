@@ -1,627 +1,2022 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>KDCHD NETWORK | Ранний доступ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KDCHD NETWORK — КД ЧД</title>
+<style>
+  :root {
+    --bg: #0F1117;
+    --bg2: #161B22;
+    --bg3: #1C2333;
+    --accent: #58A6FF;
+    --accent2: #79C0FF;
+    --glow: rgba(88,166,255,0.15);
+    --glowS: rgba(88,166,255,0.08);
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(88,166,255,0.25);
+    --text: #E6EDF3;
+    --text2: #8B949E;
+    --text3: #6E7681;
+    --card: rgba(22,27,34,0.9);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* === ANIMATIONS === */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes glowPulse { 0%,100% { box-shadow: 0 0 20px var(--glow); } 50% { box-shadow: 0 0 40px rgba(88,166,255,0.3); } }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes glitch1 { 0%,100%{clip-path:inset(0 0 100% 0)} 5%{clip-path:inset(33% 0 55% 0)} 15%{clip-path:inset(10% 0 80% 0)} 20%{clip-path:inset(0 0 100% 0)} }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0F1117;
-      color: #e5e7eb;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 12px;
-    }
+  /* === SCREEN SYSTEM === */
+  .screen { display:none; animation: fadeIn 0.3s ease; }
+  .screen.active { display:block; }
 
-    .kdchd-app {
-      max-width: 500px;
-      width: 100%;
-      background: #161B22;
-      border-radius: 32px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      height: 92vh;
-      max-height: 900px;
-      backdrop-filter: blur(12px);
-      position: relative;
-      transition: all 0.3s ease;
-    }
+  /* === AUTH SCREEN === */
+  #screen-auth {
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .auth-bg {
+    position:fixed;
+    inset:0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(88,166,255,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(121,192,255,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 80%, rgba(56,139,253,0.05) 0%, transparent 50%);
+    pointer-events:none;
+  }
+  .auth-grid {
+    position:fixed;
+    inset:0;
+    background-image: linear-gradient(rgba(88,166,255,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(88,166,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events:none;
+  }
+  .auth-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 420px;
+    max-width: 95vw;
+    position:relative;
+    z-index:10;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 60px rgba(88,166,255,0.08), 0 0 120px rgba(0,0,0,0.5);
+    animation: glowPulse 4s ease infinite;
+  }
+  .auth-logo {
+    text-align:center;
+    margin-bottom:32px;
+  }
+  .auth-logo-text {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .auth-logo-sub {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+  .alpha-badge {
+    display:inline-block;
+    background: rgba(88,166,255,0.1);
+    border: 1px solid var(--border2);
+    color: var(--accent);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top:8px;
+    font-weight:600;
+    animation: blink 2s ease infinite;
+  }
+  .tab-switcher {
+    display:flex;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex:1;
+    padding: 9px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--bg2);
+    color: var(--text);
+    box-shadow: 0 0 15px var(--glowS);
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display:block;
+  }
+  .form-input {
+    width:100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    padding: 11px 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px var(--glowS);
+  }
+  .form-input::placeholder { color: var(--text3); }
+  .form-select {
+    width:100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    padding: 11px 14px;
+    outline: none;
+    cursor: pointer;
+  }
+  .btn-primary {
+    width:100%;
+    padding: 13px;
+    background: linear-gradient(135deg, rgba(88,166,255,0.2), rgba(88,166,255,0.1));
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-primary::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, rgba(88,166,255,0.3), rgba(88,166,255,0.15));
+    box-shadow: 0 0 25px var(--glow);
+    transform: translateY(-1px);
+  }
+  .avatar-grid {
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .avatar-opt {
+    font-size: 22px;
+    text-align:center;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor:pointer;
+    background: var(--bg);
+    transition: all 0.15s;
+  }
+  .avatar-opt:hover { background: var(--bg3); transform:scale(1.1); }
+  .avatar-opt.selected { border-color: var(--accent); background: var(--bg3); }
 
-    .experiment-mode .kdchd-app {
-      animation: subtleGlitch 0.3s infinite;
-      box-shadow: 0 0 25px rgba(59,130,246,0.4);
-    }
+  /* === MAIN APP === */
+  #screen-app { display:none; }
+  #screen-app.active { display:flex; min-height:100vh; }
+  .sidebar {
+    width: 240px;
+    min-height:100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    position: fixed;
+    top:0; left:0; bottom:0;
+    z-index:100;
+    transition: transform 0.3s;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo-text {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .sidebar-alpha {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+  .sidebar-nav { flex:1; padding: 16px 12px; }
+  .nav-item {
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    text-decoration:none;
+  }
+  .nav-item:hover {
+    background: var(--bg3);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .nav-item.active {
+    background: rgba(88,166,255,0.1);
+    color: var(--accent);
+    border-color: var(--border2);
+  }
+  .nav-icon { font-size: 16px; width:20px; text-align:center; }
+  .sidebar-user {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    cursor:pointer;
+  }
+  .sidebar-user:hover { background: var(--bg3); }
+  .user-ava { font-size: 28px; }
+  .user-name { font-size: 13px; font-weight:600; }
+  .user-level { font-size: 11px; color: var(--text3); margin-top:1px; }
+  .main-content {
+    flex:1;
+    margin-left: 240px;
+    min-height:100vh;
+  }
+  .topbar {
+    position: sticky;
+    top:0;
+    background: rgba(15,17,23,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    z-index:50;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; }
+  .topbar-actions { display:flex; gap:8px; align-items:center; }
+  .exp-toggle {
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight:600;
+    cursor:pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .exp-toggle.on {
+    background: rgba(255,100,100,0.1);
+    border-color: rgba(255,100,100,0.3);
+    color: #ff6464;
+    animation: blink 1.5s infinite;
+  }
+  .lang-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    cursor:pointer;
+    transition: all 0.2s;
+  }
+  .lang-btn:hover { border-color: var(--border2); color: var(--accent); }
+  .page { display:none; padding: 24px; animation: fadeIn 0.3s ease; }
+  .page.active { display:block; }
 
-    @keyframes subtleGlitch {
-      0% { transform: translate(0); }
-      20% { transform: translate(-0.5px, 0.5px); }
-      40% { transform: translate(0.5px, -0.5px); }
-      60% { transform: translate(0); }
-      80% { transform: translate(0.3px, 0); }
-      100% { transform: translate(0); }
-    }
+  /* === FEED === */
+  .feed-container { max-width: 640px; }
+  .post-composer {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+  }
+  .composer-top { display:flex; gap:12px; align-items:flex-start; }
+  .composer-ava { font-size:28px; }
+  .composer-textarea {
+    flex:1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+    resize:none;
+    min-height: 60px;
+    font-family: inherit;
+  }
+  .composer-textarea::placeholder { color: var(--text3); }
+  .composer-bottom {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:12px;
+    padding-top:12px;
+    border-top: 1px solid var(--border);
+  }
+  .composer-tools { display:flex; gap:8px; }
+  .tool-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    cursor:pointer;
+    transition: all 0.2s;
+  }
+  .tool-btn:hover { border-color: var(--border2); color: var(--accent); background: var(--glowS); }
+  .post-btn {
+    padding: 7px 20px;
+    background: rgba(88,166,255,0.15);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight:700;
+    cursor:pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .post-btn:hover { background: rgba(88,166,255,0.25); box-shadow: 0 0 20px var(--glow); }
+  .post-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+    animation: fadeIn 0.4s ease;
+    backdrop-filter: blur(10px);
+  }
+  .post-card:hover { border-color: rgba(88,166,255,0.15); box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+  .post-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .post-ava { font-size:26px; }
+  .post-meta { flex:1; }
+  .post-author { font-size:13px; font-weight:600; }
+  .post-time { font-size:11px; color: var(--text3); margin-top:1px; }
+  .post-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius:20px;
+    font-weight:600;
+    letter-spacing:0.05em;
+  }
+  .badge-film { background:rgba(255,180,50,0.1); color:#ffb432; border:1px solid rgba(255,180,50,0.2); }
+  .badge-ai { background:rgba(88,166,255,0.1); color:var(--accent); border:1px solid var(--border2); }
+  .badge-game { background:rgba(100,255,150,0.1); color:#64ff96; border:1px solid rgba(100,255,150,0.2); }
+  .badge-idea { background:rgba(200,100,255,0.1); color:#c864ff; border:1px solid rgba(200,100,255,0.2); }
+  .badge-exp { background:rgba(255,100,100,0.1); color:#ff6464; border:1px solid rgba(255,100,100,0.2); }
+  .post-text { font-size:14px; line-height:1.65; color: var(--text); margin-bottom:14px; }
+  .post-img {
+    width:100%; border-radius:8px; border:1px solid var(--border);
+    margin-bottom:14px; object-fit:cover; max-height:280px;
+  }
+  .reactions { display:flex; gap:8px; flex-wrap:wrap; }
+  .reaction {
+    display:flex; align-items:center; gap:5px;
+    padding: 5px 12px;
+    border-radius:20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .reaction:hover { border-color: var(--border2); background: var(--glowS); transform:scale(1.05); }
+  .reaction.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.08); }
+  .reaction-emoji { font-size:14px; }
 
-    .main-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 12px 8px;
-      scrollbar-width: thin;
-      scrollbar-color: #2d3748 #0F1117;
-    }
+  /* === PROJECTS === */
+  .projects-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+  .project-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor:pointer;
+    transition: all 0.2s;
+    animation: fadeIn 0.4s ease;
+  }
+  .project-card:hover { border-color: var(--border2); box-shadow: 0 8px 32px rgba(88,166,255,0.08); transform:translateY(-2px); }
+  .project-icon { font-size:32px; margin-bottom:12px; }
+  .project-name { font-size:15px; font-weight:700; margin-bottom:6px; letter-spacing:0.02em; }
+  .project-status { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 10px; border-radius:20px; margin-bottom:12px; }
+  .status-dev { background:rgba(255,180,50,0.1); color:#ffb432; }
+  .status-done { background:rgba(100,255,150,0.1); color:#64ff96; }
+  .status-paused { background:rgba(150,150,150,0.1); color:#999; }
+  .project-progress-bar {
+    background: var(--bg);
+    border-radius:4px;
+    height:4px;
+    margin-bottom:8px;
+    overflow:hidden;
+  }
+  .project-progress-fill {
+    height:100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius:4px;
+    transition: width 0.6s ease;
+    box-shadow: 0 0 8px var(--glow);
+  }
+  .project-info { font-size:11px; color: var(--text3); display:flex; justify-content:space-between; }
+  .project-update { font-size:12px; color: var(--text2); margin-top:10px; font-style:italic; }
+  .add-project-card {
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor:pointer;
+    transition: all 0.2s;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:160px;
+    color: var(--text3);
+    font-size:13px;
+    gap:8px;
+  }
+  .add-project-card:hover { border-color: var(--border2); color: var(--accent); background: var(--glowS); }
 
-    .main-scroll::-webkit-scrollbar {
-      width: 4px;
-    }
-    .main-scroll::-webkit-scrollbar-track {
-      background: #0F1117;
-    }
-    .main-scroll::-webkit-scrollbar-thumb {
-      background: #3b82f6;
-      border-radius: 8px;
-    }
+  /* === PROFILE === */
+  .profile-header {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom:20px;
+    display:flex;
+    align-items:flex-start;
+    gap:24px;
+  }
+  .profile-ava-big { font-size:56px; }
+  .profile-info { flex:1; }
+  .profile-name { font-size:22px; font-weight:800; margin-bottom:4px; }
+  .profile-desc { font-size:14px; color: var(--text2); margin-bottom:12px; line-height:1.5; }
+  .profile-status {
+    display:inline-flex; align-items:center; gap:6px;
+    padding: 5px 14px; border-radius:20px;
+    background: rgba(88,166,255,0.08); border:1px solid var(--border2);
+    font-size:12px; color: var(--accent); margin-bottom:12px;
+  }
+  .weirdness-bar {
+    display:flex; align-items:center; gap:10px; margin-top:8px;
+  }
+  .weirdness-label { font-size:12px; color: var(--text2); }
+  .weirdness-dots { display:flex; gap:4px; }
+  .w-dot {
+    width:10px; height:10px; border-radius:50%;
+    background: var(--border);
+  }
+  .w-dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .profile-stats { display:flex; gap:16px; margin-top:12px; }
+  .profile-stat { text-align:center; }
+  .stat-num { font-size:20px; font-weight:700; }
+  .stat-label { font-size:11px; color: var(--text3); }
 
-    .glass-card {
-      background: rgba(22, 27, 34, 0.7);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 24px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-      transition: 0.2s;
-    }
+  /* === THEORIES === */
+  .theory-generator {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align:center;
+    margin-bottom:24px;
+  }
+  .theory-text {
+    font-size:18px;
+    font-weight:600;
+    color: var(--text);
+    min-height:60px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin: 16px 0;
+    line-height:1.4;
+    animation: fadeIn 0.3s ease;
+  }
+  .btn-theory {
+    padding: 11px 28px;
+    background: rgba(200,100,255,0.1);
+    border: 1px solid rgba(200,100,255,0.3);
+    border-radius:20px;
+    color:#c864ff;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.1em;
+    cursor:pointer;
+    transition: all 0.2s;
+  }
+  .btn-theory:hover { background: rgba(200,100,255,0.2); box-shadow: 0 0 20px rgba(200,100,255,0.2); }
+  .theories-list { display:flex; flex-direction:column; gap:12px; }
+  .theory-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    font-size:14px;
+    display:flex; align-items:flex-start; gap:12px;
+    animation: fadeIn 0.3s ease;
+  }
+  .theory-emoji { font-size:20px; }
 
-    .glass-card:hover {
-      border-color: rgba(59,130,246,0.3);
-    }
+  /* === QR === */
+  .qr-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom:16px;
+    text-align:center;
+  }
+  .qr-placeholder {
+    width:180px; height:180px;
+    background: var(--bg2);
+    border: 2px solid var(--border2);
+    border-radius:12px;
+    margin: 16px auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .qr-inner {
+    width:140px;
+    height:140px;
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap:3px;
+  }
+  .qr-cell {
+    border-radius:2px;
+    background: var(--accent);
+  }
 
-    button {
-      background: #1e293b;
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #f1f5f9;
-      border-radius: 20px;
-      padding: 8px 16px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      backdrop-filter: blur(8px);
-    }
+  /* === EXPERIMENT MODE === */
+  body.experiment .page-feed .post-btn::before { content: 'СДЕЛАТЬ ХАОС'; }
+  body.experiment .page-feed .post-btn { display:none; }
+  body.experiment .chaos-btn { display:flex !important; }
+  body.experiment::before {
+    content:'';
+    position:fixed;
+    top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, transparent, #ff6464, transparent);
+    z-index:9999;
+    animation: shimmer 1s infinite;
+  }
+  .chaos-btn {
+    display:none !important;
+    padding: 7px 20px;
+    background: rgba(255,100,100,0.15);
+    border: 1px solid rgba(255,100,100,0.3);
+    border-radius: 20px;
+    color: #ff6464;
+    font-size: 12px;
+    font-weight:700;
+    cursor:pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    animation: blink 1s infinite;
+  }
+  .chaos-btn:hover { background: rgba(255,100,100,0.25); }
+  body.experiment .topbar { border-bottom-color: rgba(255,100,100,0.2); }
+  body.experiment .post-card:hover { border-color: rgba(255,100,100,0.2); }
+  .glitch-text {
+    position:relative;
+  }
+  body.experiment .glitch-text::after {
+    content: attr(data-text);
+    position:absolute;
+    left:2px; top:0;
+    color: #ff6464;
+    opacity:0.5;
+    clip-path: inset(30% 0 60% 0);
+    animation: glitch1 3s infinite;
+  }
 
-    button:hover {
-      background: #2563eb;
-      border-color: #3b82f6;
-      box-shadow: 0 0 18px #3b82f680;
-    }
+  /* === MODAL === */
+  .modal-overlay {
+    display:none;
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index:200;
+    align-items:center;
+    justify-content:center;
+  }
+  .modal-overlay.show { display:flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 28px;
+    width: 460px;
+    max-width: 95vw;
+    animation: fadeIn 0.2s ease;
+    box-shadow: 0 0 60px rgba(88,166,255,0.15);
+  }
+  .modal-title { font-size:16px; font-weight:700; margin-bottom:20px; }
+  .modal-close {
+    float:right;
+    background:none;
+    border:none;
+    color: var(--text2);
+    font-size:20px;
+    cursor:pointer;
+    padding:0;
+    line-height:1;
+  }
+  .modal-close:hover { color: var(--text); }
 
-    .accent-btn {
-      background: #2563eb;
-      color: white;
-      font-weight: 600;
-      border: none;
-    }
+  /* === LANG PICKER === */
+  .lang-dropdown {
+    display:none;
+    position:absolute;
+    top:48px; right:16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow:hidden;
+    z-index:300;
+    min-width:160px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: fadeIn 0.15s ease;
+  }
+  .lang-dropdown.show { display:block; }
+  .lang-opt {
+    padding:10px 16px;
+    cursor:pointer;
+    font-size:13px;
+    display:flex; align-items:center; gap:8px;
+    transition: background 0.15s;
+  }
+  .lang-opt:hover { background: var(--bg3); }
+  .lang-opt.active { color: var(--accent); }
 
-    input, textarea {
-      background: #0F1117;
-      border: 1px solid #2d3748;
-      border-radius: 16px;
-      padding: 12px 16px;
-      color: white;
-      width: 100%;
-      margin: 8px 0;
-      outline: none;
-    }
+  /* === SECTION HEADERS === */
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .section-title { font-size:18px; font-weight:700; }
+  .section-badge {
+    font-size:10px; padding:3px 10px; border-radius:20px;
+    background: rgba(88,166,255,0.08); color: var(--accent);
+    border:1px solid var(--border2); letter-spacing:0.1em;
+  }
+  .page-title { font-size:22px; font-weight:800; margin-bottom:6px; }
+  .page-sub { font-size:13px; color: var(--text2); margin-bottom:24px; }
 
-    input:focus, textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 10px #3b82f640;
-    }
+  /* === MOBILE === */
+  .mobile-nav {
+    display:none;
+    position:fixed;
+    bottom:0; left:0; right:0;
+    background: var(--bg2);
+    border-top:1px solid var(--border);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    z-index:100;
+  }
+  .mobile-nav-items { display:flex; justify-content:space-around; }
+  .mobile-nav-item {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding: 6px 12px;
+    color: var(--text3);
+    font-size:10px;
+    cursor:pointer;
+    border-radius:8px;
+    transition: all 0.2s;
+    border:none; background:none;
+  }
+  .mobile-nav-item.active { color: var(--accent); }
+  .mobile-nav-icon { font-size:20px; }
+  .hamburger {
+    display:none;
+    background:none; border:none;
+    color: var(--text);
+    font-size:20px;
+    cursor:pointer;
+    padding:4px;
+  }
 
-    .bottom-nav {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 12px 8px;
-      background: rgba(15, 17, 23, 0.9);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.05);
-    }
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); z-index:200; }
+    .sidebar.open { transform: translateX(0); }
+    .main-content { margin-left:0; }
+    .hamburger { display:block; }
+    .mobile-nav { display:block; }
+    .page { padding: 16px 16px 80px; }
+    .topbar { padding: 12px 16px; }
+    .profile-header { flex-direction:column; }
+    .auth-box { padding: 32px 24px; }
+  }
 
-    .nav-icon {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 20px;
-      color: #9ca3af;
-      transition: 0.2s;
-      cursor: pointer;
-    }
+  /* === MISC UTILS === */
+  .profile-header.has-banner { background-size:cover!important; background-position:center!important; }
+  .profile-header.has-banner::before {
+    content:''; position:absolute; inset:0; border-radius:var(--radius);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.7));
+  }
+  .profile-header.has-banner > * { position:relative; z-index:1; }
+  .flex { display:flex; align-items:center; gap:8px; }
+  .mt8 { margin-top:8px; }
+  .mt16 { margin-top:16px; }
+  .text2 { color: var(--text2); font-size:13px; }
+  .empty-state {
+    text-align:center;
+    padding:48px 24px;
+    color: var(--text3);
+    font-size:14px;
+  }
+  .empty-state .e-emoji { font-size:40px; margin-bottom:12px; }
+  .empty-state .e-title { font-size:16px; font-weight:600; color: var(--text2); margin-bottom:6px; }
+  .experiment-banner {
+    background: rgba(255,100,100,0.06);
+    border: 1px solid rgba(255,100,100,0.15);
+    border-radius:8px; padding:10px 14px;
+    display:none; align-items:center; gap:8px;
+    margin-bottom:16px; font-size:12px; color:#ff9999;
+  }
+  body.experiment .experiment-banner { display:flex; }
 
-    .nav-icon.active {
-      color: #3b82f6;
-      text-shadow: 0 0 12px #3b82f6;
-    }
-
-    .strange-level {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-    }
-
-    .project-meter {
-      height: 6px;
-      background: #2d3748;
-      border-radius: 8px;
-      margin: 10px 0;
-      overflow: hidden;
-    }
-
-    .meter-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #a78bfa);
-      border-radius: 8px;
-    }
-
-    .lang-selector {
-      display: flex;
-      gap: 6px;
-      margin: 8px 0;
-    }
-
-    /* Стили для профиля с баннером */
-    .profile-banner {
-      width: 100%;
-      height: 140px;
-      background: linear-gradient(135deg, #1e293b, #0F1117);
-      border-radius: 20px 20px 0 0;
-      object-fit: cover;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #6b7280;
-      font-size: 14px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .profile-banner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    .avatar-upload {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      border: 3px solid #161B22;
-      margin-top: -45px;
-      position: relative;
-      z-index: 2;
-      background: #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .avatar-upload img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-    }
-
-    .file-input-hidden {
-      display: none;
-    }
-
-    .upload-hint {
-      font-size: 11px;
-      color: #6b7280;
-      margin-top: 4px;
-    }
-
-    @media (min-width: 768px) {
-      .kdchd-app {
-        max-width: 720px;
-      }
-      .profile-banner {
-        height: 180px;
-      }
-    }
-  </style>
+  /* Loading anim */
+  .loader {
+    display:inline-block;
+    width:16px; height:16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius:50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .img-upload-preview {
+    max-width:100%; border-radius:8px; border:1px solid var(--border);
+    margin-top:8px; display:none;
+  }
+</style>
 </head>
 <body>
-  <div id="app" class="kdchd-app"></div>
 
-  <script type="module">
-    // ====================== KDCHD NETWORK – АВАТАРЫ И БАННЕРЫ ======================
-    const i18n = {
-      ru: {
-        home: "Главная", projects: "Проекты", theories: "Теории", experiments: "Эксперименты",
-        profile: "Профиль", settings: "Настройки", earlyAccess: "⚡ РАННИЙ ДОСТУП / ALPHA TEST",
-        createPost: "Создать пост", makeChaos: "СДЕЛАТЬ ХАОС", randomTheory: "🧠 СЛУЧАЙНАЯ ТЕОРИЯ",
-        loginExp: "ВОЙТИ В ЭКСПЕРИМЕНТ", register: "РЕГИСТРАЦИЯ", username: "Никнейм",
-        password: "Пароль", description: "Описание", strangeLevel: "Уровень странности",
-        changeAvatar: "Сменить аватар", changeBanner: "Сменить баннер",
-        maxSize: "Макс. размер: 20 МБ", reactions: { like: "❤️ Нравится", brain: "🧠 Бред, но нравится", fire: "🔥 Имба", cry: "😭 Что это вообще" }
-      },
-      en: {
-        home: "Home", projects: "Projects", theories: "Theories", experiments: "Experiments",
-        profile: "Profile", settings: "Settings", earlyAccess: "⚡ EARLY ACCESS / ALPHA TEST",
-        createPost: "Create post", makeChaos: "MAKE CHAOS", randomTheory: "🧠 RANDOM THEORY",
-        loginExp: "ENTER EXPERIMENT", register: "REGISTER", username: "Username",
-        password: "Password", description: "Bio", strangeLevel: "Strangeness Level",
-        changeAvatar: "Change avatar", changeBanner: "Change banner",
-        maxSize: "Max size: 20 MB", reactions: { like: "❤️ Like", brain: "🧠 Weird but cool", fire: "🔥 Fire", cry: "😭 What is this" }
-      },
-      uk: {
-        home: "Головна", projects: "Проєкти", theories: "Теорії", experiments: "Експерименти",
-        profile: "Профіль", settings: "Налаштування", earlyAccess: "⚡ РАННІЙ ДОСТУП / ALPHA TEST",
-        createPost: "Створити пост", makeChaos: "ЗРОБИТИ ХАОС", randomTheory: "🧠 ВИПАДКОВА ТЕОРІЯ",
-        loginExp: "УВІЙТИ В ЕКСПЕРИМЕНТ", register: "РЕЄСТРАЦІЯ", username: "Нікнейм",
-        password: "Пароль", description: "Опис", strangeLevel: "Рівень дивності",
-        changeAvatar: "Змінити аватар", changeBanner: "Змінити банер",
-        maxSize: "Макс. розмір: 20 МБ", reactions: { like: "❤️ Подобається", brain: "🧠 Маячня, але круто", fire: "🔥 Імба", cry: "😭 Що це взагалі" }
-      },
-      kz: {
-        home: "Басты", projects: "Жобалар", theories: "Теориялар", experiments: "Эксперименттер",
-        profile: "Профиль", settings: "Параметрлер", earlyAccess: "⚡ ЕРТЕ ҚОЛ ЖЕТКІЗУ / ALPHA TEST",
-        createPost: "Пост жасау", makeChaos: "ХАОС ЖАСАУ", randomTheory: "🧠 КЕЗДЕЙСОҚ ТЕОРИЯ",
-        loginExp: "ЭКСПЕРИМЕНТКЕ КІРУ", register: "ТІРКЕЛУ", username: "Лақап аты",
-        password: "Құпия сөз", description: "Сипаттама", strangeLevel: "Оғаштық деңгейі",
-        changeAvatar: "Аватарды өзгерту", changeBanner: "Баннерді өзгерту",
-        maxSize: "Макс. өлшем: 20 МБ", reactions: { like: "❤️ Ұнайды", brain: "🧠 Сандырақ, бірақ керемет", fire: "🔥 Имба", cry: "😭 Бұл не мүлде" }
-      }
-    };
-
-    const state = {
-      currentUser: null,
-      language: 'ru',
-      experimentMode: false,
-      currentPage: 'home',
-      users: [
-        { id: 1, username: "void_creator", avatar: "🎬", banner: null, desc: "Снимаю фильм во сне", status: "🎬 Снимаю фильм", strange: "🟠 Очень странный" },
-        { id: 2, username: "ai_phantom", avatar: "🤖", banner: null, desc: "ИИ учит меня говорить", status: "🤖 ИИ эксперимент", strange: "🔴 Эксперимент" },
-        { id: 3, username: "game_alice", avatar: "🎮", banner: null, desc: "Делаю игру про котов", status: "🎮 Делаю игру", strange: "🟡 Странный" },
-        { id: 4, username: "theory_x", avatar: "🌐", banner: null, desc: "Строю теории завтрака", status: "🌐 Создаю проект", strange: "⚫ Эксперимент вышел из-под контроля" },
-        { id: 5, username: "lost_project", avatar: "😭", banner: null, desc: "Забросил 3 идеи", status: "😭 Забросил проект", strange: "🟢 Нормальный" }
-      ],
-      posts: [
-        { id: 1, userId: 1, text: "Снял сцену в тумане. Получилось слишком странно.", image: null, reactions: { like: 2, brain: 4, fire: 1, cry: 0 } },
-        { id: 2, userId: 2, text: "Моя нейросеть теперь предсказывает дождь по котам.", image: null, reactions: { like: 3, brain: 5, fire: 2, cry: 1 } },
-        { id: 3, userId: 4, text: "Теория: облака это забытые мысли Wi-Fi роутеров.", image: null, reactions: { like: 6, brain: 9, fire: 3, cry: 2 } }
-      ],
-      projects: [
-        { name: "СДВИГ В ПУСТОТУ", status: "В разработке", progress: 43, lastUpdate: "Сняли сцену", creator: 1 }
-      ]
-    };
-
-    const t = (key) => {
-      const lang = i18n[state.language] || i18n.ru;
-      const keys = key.split('.');
-      let result = lang;
-      for (const k of keys) {
-        if (result && result[k] !== undefined) result = result[k];
-        else return key;
-      }
-      return result;
-    };
-
-    const randomTheories = [
-      "Что если Wi-Fi следит за котами?",
-      "Облака — это сохранённые сны старых телефонов.",
-      "Каждый раз когда ты чихаешь, где-то включается случайный свет.",
-      "Коты видят невидимые соцсети."
-    ];
-
-    function render() {
-      const app = document.getElementById('app');
-      if (!app) return;
-      const expClass = state.experimentMode ? 'experiment-mode' : '';
-
-      app.innerHTML = `
-        <div class="${expClass}" style="display: flex; flex-direction: column; height: 100%;">
-          <div style="padding: 12px; background: #0F1117; border-bottom: 1px solid #2d3748; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 700; font-size: 20px; letter-spacing: 1px;">KDCHD</span>
-            <span style="font-size: 12px; color: #3b82f6;">${t('earlyAccess')}</span>
-            <div class="lang-selector">
-              ${['ru','en','uk','kz'].map(l => `<button style="padding:4px 8px; font-size:12px;" class="${state.language===l?'accent-btn':''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}
-            </div>
-          </div>
-          <div class="main-scroll" id="mainContent"></div>
-          <div class="bottom-nav">
-            <div class="nav-icon ${state.currentPage==='home'?'active':''}" data-page="home">🏠<span style="font-size:10px;">${t('home')}</span></div>
-            <div class="nav-icon ${state.currentPage==='projects'?'active':''}" data-page="projects">📁<span style="font-size:10px;">${t('projects')}</span></div>
-            <div class="nav-icon ${state.currentPage==='theories'?'active':''}" data-page="theories">🧠<span style="font-size:10px;">${t('theories')}</span></div>
-            <div class="nav-icon ${state.currentPage==='profile'?'active':''}" data-page="profile">👤<span style="font-size:10px;">${t('profile')}</span></div>
-          </div>
+<!-- ===== AUTH ===== -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-bg"></div>
+  <div class="auth-grid"></div>
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-text">KDCHD NETWORK</div>
+      <div class="auth-logo-sub">КД ЧД</div>
+      <div class="alpha-badge">● OPEN ALPHA</div>
+    </div>
+    <div class="tab-switcher">
+      <button class="tab-btn active" onclick="switchAuthTab('login')" id="tab-login" data-i18n="login">Войти</button>
+      <button class="tab-btn" onclick="switchAuthTab('register')" id="tab-reg" data-i18n="register">Зарегистрироваться</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="auth-login">
+      <div class="form-group">
+        <label class="form-label" data-i18n="nickname">НИК</label>
+        <input class="form-input" id="login-nick" type="text" placeholder="твой_ник" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="password">ПАРОЛЬ</label>
+        <input class="form-input" id="login-pass" type="password" placeholder="••••••••">
+      </div>
+      <div id="login-error" style="color:#ff6464;font-size:12px;margin-bottom:10px;display:none;"></div>
+      <button class="btn-primary" onclick="doLogin()" data-i18n="enter_exp">ВОЙТИ В ЭКСПЕРИМЕНТ</button>
+    </div>
+    <!-- REGISTER -->
+    <div id="auth-register" style="display:none;">
+      <div class="form-group">
+        <label class="form-label" data-i18n="nickname">НИК</label>
+        <input class="form-input" id="reg-nick" type="text" placeholder="твой_ник" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="password">ПАРОЛЬ</label>
+        <input class="form-input" id="reg-pass" type="password" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="description">О СЕБЕ</label>
+        <input class="form-input" id="reg-desc" type="text" placeholder="Создаю нечто странное...">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="status">СТАТУС</label>
+        <select class="form-select" id="reg-status">
+          <option value="🎬 Снимаю фильм">🎬 Снимаю фильм</option>
+          <option value="🤖 ИИ эксперимент">🤖 ИИ эксперимент</option>
+          <option value="🎮 Делаю игру">🎮 Делаю игру</option>
+          <option value="🌐 Создаю проект">🌐 Создаю проект</option>
+          <option value="😭 Забросил проект">😭 Забросил проект</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="avatar">АВАТАР</label>
+        <div class="avatar-grid" id="avatar-grid">
+          <div class="avatar-opt selected" onclick="selectAvatar(this)">🤖</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">👾</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">🎬</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">🔥</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">🧪</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">🌌</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">👻</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">🎭</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">🦾</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">💀</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">🐙</div>
+          <div class="avatar-opt" onclick="selectAvatar(this)">⚡</div>
         </div>
-      `;
+      </div>
+      <div id="reg-error" style="color:#ff6464;font-size:12px;margin-bottom:10px;display:none;"></div>
+      <button class="btn-primary" onclick="doRegister()" data-i18n="enter_exp">ВОЙТИ В ЭКСПЕРИМЕНТ</button>
+    </div>
+    <p style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px;" data-i18n="alpha_hint">Это альфа-тест. Твои данные хранятся локально.</p>
+  </div>
+</div>
 
-      document.querySelectorAll('[data-lang]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          state.language = e.target.dataset.lang;
-          localStorage.setItem('kdchd_lang', state.language);
-          render();
-        });
-      });
+<!-- ===== MAIN APP ===== -->
+<div id="screen-app" class="screen">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-text">KDCHD NETWORK</div>
+      <div class="sidebar-alpha">КД ЧД · OPEN ALPHA</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('feed')" id="nav-feed">
+        <span class="nav-icon">🏠</span> <span data-i18n="home">Главная</span>
+      </div>
+      <div class="nav-item" onclick="showPage('projects')" id="nav-projects">
+        <span class="nav-icon">🚀</span> <span data-i18n="projects">Проекты</span>
+      </div>
+      <div class="nav-item" onclick="showPage('theories')" id="nav-theories">
+        <span class="nav-icon">🧠</span> <span data-i18n="theories">Теории</span>
+      </div>
+      <div class="nav-item" onclick="showPage('experiments')" id="nav-experiments">
+        <span class="nav-icon">🧪</span> <span data-i18n="experiments">Эксперименты</span>
+      </div>
+      <div class="nav-item" onclick="showPage('profile')" id="nav-profile">
+        <span class="nav-icon">👤</span> <span data-i18n="profile">Профиль</span>
+      </div>
+      <div class="nav-item" onclick="showPage('qr')" id="nav-qr">
+        <span class="nav-icon">📱</span> QR / Invite
+      </div>
+      <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
+        <span class="nav-icon">⚙️</span> <span data-i18n="settings">Настройки</span>
+      </div>
+    </nav>
+    <div class="sidebar-user" onclick="showPage('profile')">
+      <div class="user-ava" id="sidebar-ava" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+      <div>
+        <div class="user-name" id="sidebar-name">...</div>
+        <div class="user-level" id="sidebar-level">🟢 Нормальный</div>
+      </div>
+    </div>
+  </div>
 
-      document.querySelectorAll('.nav-icon').forEach(icon => {
-        icon.addEventListener('click', (e) => {
-          state.currentPage = e.currentTarget.dataset.page;
-          render();
-        });
-      });
-
-      renderPageContent();
-    }
-
-    function renderPageContent() {
-      const main = document.getElementById('mainContent');
-      if (!main) return;
-      const page = state.currentPage;
-
-      if (!state.currentUser && page !== 'profile') {
-        main.innerHTML = renderAuth();
-        attachAuthEvents();
-        return;
-      }
-
-      switch(page) {
-        case 'home': main.innerHTML = renderHome(); attachHomeEvents(); break;
-        case 'projects': main.innerHTML = renderProjects(); break;
-        case 'theories': main.innerHTML = renderTheories(); break;
-        case 'profile': main.innerHTML = state.currentUser ? renderProfile() : renderAuth();
-                        if(!state.currentUser) attachAuthEvents(); else attachProfileEvents(); break;
-        default: main.innerHTML = renderHome();
-      }
-    }
-
-    function renderAuth() {
-      return `
-        <div class="glass-card" style="text-align:center;">
-          <h2 style="margin-bottom:16px;">🔮 KDCHD NETWORK</h2>
-          <p style="color:#9ca3af;">${t('earlyAccess')}</p>
-          <input id="loginUsername" placeholder="${t('username')}" />
-          <input id="loginPassword" type="password" placeholder="${t('password')}" />
-          <button id="loginBtn" class="accent-btn" style="width:100%; margin-top:12px;">${t('loginExp')}</button>
-          <button id="registerBtn" style="width:100%; margin-top:8px;">${t('register')}</button>
-          <p style="margin-top:12px; font-size:12px; color:#6b7280;">существующие: void_creator / 1234</p>
-        </div>
-      `;
-    }
-
-    function attachAuthEvents() {
-      document.getElementById('loginBtn')?.addEventListener('click', () => {
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value.trim();
-        if (username && password) {
-          let user = state.users.find(u => u.username === username);
-          if (!user) {
-            user = { id: Date.now(), username, avatar: "👽", banner: null, desc: "новый экспериментатор", status: "🌐 Создаю проект", strange: "🟢 Нормальный" };
-            state.users.push(user);
-          }
-          state.currentUser = user;
-          render();
-        }
-      });
-      document.getElementById('registerBtn')?.addEventListener('click', () => {
-        alert('Регистрация: ник + пароль (альфа)');
-      });
-    }
-
-    function renderHome() {
-      const postBtnText = state.experimentMode ? t('makeChaos') : t('createPost');
-      return `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <span class="strange-level">${state.currentUser?.strange || '🟢'}</span>
-          <button id="toggleExperiment" class="${state.experimentMode ? 'accent-btn' : ''}">🌀 ${state.experimentMode ? 'ВЫКЛ ЭКСПЕРИМЕНТ' : 'РЕЖИМ ЭКСПЕРИМЕНТА'}</button>
-        </div>
-        <div class="glass-card">
-          <textarea id="newPostText" placeholder="${postBtnText}..." rows="2"></textarea>
-          <button id="submitPost" class="accent-btn" style="margin-top:8px;">${postBtnText}</button>
-        </div>
-        ${state.posts.map(p => {
-          const user = state.users.find(u => u.id === p.userId) || {};
-          return `<div class="glass-card">
-            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-              <div style="width:32px;height:32px;border-radius:50%;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;">
-                ${user.avatar && user.avatar.startsWith('data:') ? `<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />` : user.avatar || '👤'}
-              </div>
-              <strong>${user.username || 'unknown'}</strong>
-              <span style="font-size:12px; color:#9ca3af;">${user.status || ''}</span>
-            </div>
-            <p>${p.text}</p>
-            <div style="display:flex; gap:10px; margin-top:12px; font-size:14px;">
-              <span>❤️ ${p.reactions.like}</span><span>🧠 ${p.reactions.brain}</span><span>🔥 ${p.reactions.fire}</span><span>😭 ${p.reactions.cry}</span>
-            </div>
-          </div>`;
-        }).join('')}
-      `;
-    }
-
-    function attachHomeEvents() {
-      document.getElementById('toggleExperiment')?.addEventListener('click', () => {
-        state.experimentMode = !state.experimentMode;
-        render();
-      });
-      document.getElementById('submitPost')?.addEventListener('click', () => {
-        const text = document.getElementById('newPostText').value.trim();
-        if (text && state.currentUser) {
-          state.posts.unshift({ id: Date.now(), userId: state.currentUser.id, text, image: null, reactions: { like:0, brain:0, fire:0, cry:0 } });
-          render();
-        }
-      });
-    }
-
-    function renderProjects() {
-      return `
-        <div class="glass-card">
-          <h3>📁 ${t('projects')}</h3>
-          ${state.projects.map(p => `
-            <div style="margin:12px 0;">
-              <strong>${p.name}</strong> <span>${p.status}</span>
-              <div class="project-meter"><div class="meter-fill" style="width:${p.progress}%"></div></div>
-              <small>${p.lastUpdate}</small>
-            </div>
-          `).join('')}
-          <button class="accent-btn" onclick="alert('Создание проекта (альфа)')">+ Новый проект</button>
-        </div>
-      `;
-    }
-
-    function renderTheories() {
-      const randomTheory = randomTheories[Math.floor(Math.random() * randomTheories.length)];
-      return `
-        <div class="glass-card" style="text-align:center;">
-          <h3>🧠 ${t('randomTheory')}</h3>
-          <p style="font-size:18px; margin:16px 0;">“${randomTheory}”</p>
-          <button id="newTheoryBtn">🔄 Другая теория</button>
-        </div>
-      `;
-    }
-
-    function renderProfile() {
-      if (!state.currentUser) return '';
-      const user = state.currentUser;
-      const bannerBg = user.banner ? `url(${user.banner})` : 'linear-gradient(135deg, #1e293b, #0F1117)';
-      return `
-        <div class="glass-card" style="padding:0; overflow:hidden;">
-          <div class="profile-banner" style="background:${bannerBg}; background-size:cover; background-position:center;">
-            ${user.banner ? '<img src="' + user.banner + '" alt="banner" />' : ''}
-            <label for="bannerUpload" style="position:absolute; bottom:8px; right:12px; background:#000000aa; padding:4px 10px; border-radius:12px; font-size:11px; cursor:pointer; z-index:3;">${t('changeBanner')}</label>
-            <input type="file" id="bannerUpload" class="file-input-hidden" accept="image/*" />
-          </div>
-          <div style="display:flex; flex-direction:column; align-items:center; padding:0 16px 16px;">
-            <label for="avatarUpload" class="avatar-upload">
-              ${user.avatar && user.avatar.startsWith('data:') ? `<img src="${user.avatar}" alt="avatar" />` : user.avatar || '👤'}
-              <input type="file" id="avatarUpload" class="file-input-hidden" accept="image/*" />
-            </label>
-            <p class="upload-hint">${t('changeAvatar')} • ${t('maxSize')}</p>
-            <h2 style="margin-top:8px;">${user.username}</h2>
-            <p style="color:#9ca3af;">${user.desc}</p>
-            <p>${user.status}</p>
-            <div class="strange-level" style="justify-content:center; margin:8px 0;">${user.strange}</div>
-            <button id="qrBtn" style="margin-top:8px;">📱 QR профиля</button>
+  <!-- Mobile topbar -->
+  <div class="main-content">
+      <div class="topbar" style="position:relative;">
+      <div class="flex">
+        <button class="hamburger" onclick="toggleSidebar()" aria-label="Меню">☰</button>
+        <span class="topbar-title glitch-text" id="topbar-title" data-text="Главная" data-i18n="home">Главная</span>
+      </div>
+      <div class="topbar-actions">
+        <span style="font-size:10px;letter-spacing:0.15em;color:var(--text3);display:none;" class="d-md-inline">v0.1-alpha</span>
+        <button class="exp-toggle" id="exp-toggle" onclick="toggleExperiment()" data-i18n="exp_mode">⚗️ ЭКСПЕРИМЕНТ</button>
+        <div style="position:relative;">
+          <button class="lang-btn" onclick="toggleLangMenu()" id="lang-display">🇷🇺 RU</button>
+          <div class="lang-dropdown" id="lang-menu">
+            <div class="lang-opt active" onclick="setLang('ru')">🇷🇺 Русский</div>
+            <div class="lang-opt" onclick="setLang('en')">🇬🇧 English</div>
+            <div class="lang-opt" onclick="setLang('uk')">🇺🇦 Українська</div>
+            <div class="lang-opt" onclick="setLang('kz')">🇰🇿 Қазақша</div>
           </div>
         </div>
-      `;
+      </div>
+    </div>
+
+    <!-- FEED PAGE -->
+    <div class="page active page-feed" id="page-feed">
+      <div class="feed-container">
+        <div class="experiment-banner">
+          ⚗️ <span data-i18n="exp_active">Режим эксперимента активен. Интерфейс нестабилен.</span>
+        </div>
+        <div class="post-composer" id="post-composer">
+          <div class="composer-top">
+            <div class="composer-ava" id="composer-ava" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+            <textarea class="composer-textarea" id="post-text-input" placeholder="Что происходит в твоём эксперименте?" data-i18n-ph="post_placeholder"></textarea>
+          </div>
+          <div id="img-preview-wrap">
+            <img id="img-preview" class="img-upload-preview" alt="">
+          </div>
+          <div class="composer-bottom">
+            <div class="composer-tools">
+              <button class="tool-btn" onclick="document.getElementById('img-file-input').click()">📷 <span data-i18n="image">Фото</span></button>
+              <input type="file" id="img-file-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+              <select class="tool-btn" id="post-tag-select" style="font-size:12px;cursor:pointer;">
+                <option value="idea">💡 Идея</option>
+                <option value="film">🎬 Фильм</option>
+                <option value="ai">🤖 ИИ</option>
+                <option value="game">🎮 Игра</option>
+                <option value="exp">🧪 Эксперимент</option>
+              </select>
+            </div>
+            <button class="post-btn" onclick="createPost()" id="real-post-btn">
+              <span data-i18n="post_btn">Опубликовать</span>
+            </button>
+            <button class="chaos-btn" onclick="createPost()">💥 СДЕЛАТЬ ХАОС</button>
+          </div>
+        </div>
+        <div id="feed-list"></div>
+      </div>
+    </div>
+
+    <!-- PROJECTS PAGE -->
+    <div class="page" id="page-projects">
+      <div class="section-header">
+        <div>
+          <div class="page-title" data-i18n="projects">Проекты</div>
+          <div class="page-sub" data-i18n="projects_sub">Проектометр — твои идеи, прогресс и статус</div>
+        </div>
+        <span class="section-badge" data-i18n="alpha">АЛЬФА</span>
+      </div>
+      <div class="projects-grid" id="projects-grid"></div>
+    </div>
+
+    <!-- THEORIES PAGE -->
+    <div class="page" id="page-theories">
+      <div class="page-title" data-i18n="theories">Теории</div>
+      <div class="page-sub" data-i18n="theories_sub">Странные мысли, которые не дают покоя</div>
+      <div class="theory-generator">
+        <div style="font-size:12px;letter-spacing:0.15em;color:var(--text3);" data-i18n="random_theory">СЛУЧАЙНАЯ ТЕОРИЯ</div>
+        <div class="theory-text" id="theory-display">
+          💭 Нажми на кнопку...
+        </div>
+        <button class="btn-theory" onclick="generateTheory()" data-i18n="generate_theory">🎲 СГЕНЕРИРОВАТЬ</button>
+      </div>
+      <div class="theories-list" id="theories-list"></div>
+    </div>
+
+    <!-- EXPERIMENTS PAGE -->
+    <div class="page" id="page-experiments">
+      <div class="page-title" data-i18n="experiments">Эксперименты</div>
+      <div class="page-sub" data-i18n="experiments_sub">Логи, наблюдения, аномалии</div>
+      <div id="experiments-list"></div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div class="page" id="page-profile">
+      <div class="profile-header" id="profile-header">
+        <div class="profile-ava-big" id="profile-ava-big" style="display:flex;align-items:center;justify-content:center;width:70px;height:70px;flex-shrink:0;"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="profile-name-display">...</div>
+          <div class="profile-desc" id="profile-desc-display">...</div>
+          <div class="profile-status" id="profile-status-display">...</div>
+          <div class="weirdness-bar">
+            <span class="weirdness-label" data-i18n="weirdness">Странность:</span>
+            <div class="weirdness-dots" id="weirdness-dots">
+              <div class="w-dot"></div>
+              <div class="w-dot"></div>
+              <div class="w-dot"></div>
+              <div class="w-dot"></div>
+              <div class="w-dot"></div>
+            </div>
+            <span style="font-size:11px;color:var(--text3);" id="weirdness-label-text">🟢 Нормальный</span>
+          </div>
+          <div class="profile-stats">
+            <div class="profile-stat"><div class="stat-num" id="stat-posts">0</div><div class="stat-label" data-i18n="posts">Постов</div></div>
+            <div class="profile-stat"><div class="stat-num" id="stat-projects">0</div><div class="stat-label" data-i18n="projects">Проектов</div></div>
+            <div class="profile-stat"><div class="stat-num" id="stat-reactions">0</div><div class="stat-label" data-i18n="reactions">Реакций</div></div>
+          </div>
+        </div>
+      </div>
+      <div id="profile-posts-list"></div>
+    </div>
+
+    <!-- QR PAGE -->
+    <div class="page" id="page-qr">
+      <div class="page-title">QR / Invite</div>
+      <div class="page-sub" data-i18n="qr_sub">Поделись своим профилем или проектом</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+        <div class="qr-section">
+          <div style="font-size:13px;font-weight:700;" data-i18n="qr_profile">QR ПРОФИЛЯ</div>
+          <div class="qr-placeholder" id="qr-profile-viz"></div>
+          <div style="font-size:12px;color:var(--text2);" id="qr-profile-label">kdchd.net/@username</div>
+        </div>
+        <div class="qr-section">
+          <div style="font-size:13px;font-weight:700;" data-i18n="qr_site">QR САЙТА</div>
+          <div class="qr-placeholder">
+            <div class="qr-inner" id="qr-site-viz"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);">kdchd.network</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="page-title" data-i18n="settings">Настройки</div>
+      <div class="page-sub" data-i18n="settings_sub">Управляй своим профилем</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:500px;">
+        <div class="form-group">
+          <label class="form-label" data-i18n="description">О СЕБЕ</label>
+          <input class="form-input" id="settings-desc" type="text">
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="status">СТАТУС</label>
+          <select class="form-select" id="settings-status">
+            <option value="🎬 Снимаю фильм">🎬 Снимаю фильм</option>
+            <option value="🤖 ИИ эксперимент">🤖 ИИ эксперимент</option>
+            <option value="🎮 Делаю игру">🎮 Делаю игру</option>
+            <option value="🌐 Создаю проект">🌐 Создаю проект</option>
+            <option value="😭 Забросил проект">😭 Забросил проект</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">GIF АВАТАР (URL)</label>
+          <input class="form-input" id="settings-gif-avatar" type="url" placeholder="https://... .gif или .png">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">Вставь ссылку на GIF — будет анимированный аватар</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">БАННЕР (URL / GIF)</label>
+          <input class="form-input" id="settings-banner-url" type="url" placeholder="https://... .gif или .jpg">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">Баннер профиля — поддерживает GIF</div>
+        </div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🤖</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">👾</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🎬</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🔥</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🧪</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🌌</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">👻</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🎭</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🦾</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">💀</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">🐙</div>
+            <div class="avatar-opt" onclick="selectSettingsAvatar(this)">⚡</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="saveSettings()" data-i18n="save">СОХРАНИТЬ</button>
+        <hr class="divider">
+        <button onclick="logout()" style="width:100%;padding:11px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:8px;color:#ff6464;font-size:13px;cursor:pointer;" data-i18n="logout">Выйти из аккаунта</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Nav -->
+  <div class="mobile-nav">
+    <div class="mobile-nav-items">
+      <button class="mobile-nav-item active" onclick="showPage('feed')" id="mnav-feed">
+        <span class="mobile-nav-icon">🏠</span><span data-i18n="home">Главная</span>
+      </button>
+      <button class="mobile-nav-item" onclick="showPage('projects')" id="mnav-projects">
+        <span class="mobile-nav-icon">🚀</span><span data-i18n="projects">Проекты</span>
+      </button>
+      <button class="mobile-nav-item" onclick="showPage('theories')" id="mnav-theories">
+        <span class="mobile-nav-icon">🧠</span><span data-i18n="theories">Теории</span>
+      </button>
+      <button class="mobile-nav-item" onclick="showPage('profile')" id="mnav-profile">
+        <span class="mobile-nav-icon">👤</span><span data-i18n="profile">Профиль</span>
+      </button>
+      <button class="mobile-nav-item" onclick="showPage('settings')" id="mnav-settings">
+        <span class="mobile-nav-icon">⚙️</span><span data-i18n="settings">Настройки</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PROJECT MODAL -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-project')">✕</button>
+    <div class="modal-title" data-i18n="new_project">Новый проект</div>
+    <div class="form-group">
+      <label class="form-label">ИКОНКА</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="avatar-opt selected" onclick="selectProjectIcon(this)">🎬</span>
+        <span class="avatar-opt" onclick="selectProjectIcon(this)">🎮</span>
+        <span class="avatar-opt" onclick="selectProjectIcon(this)">🤖</span>
+        <span class="avatar-opt" onclick="selectProjectIcon(this)">🌐</span>
+        <span class="avatar-opt" onclick="selectProjectIcon(this)">🧪</span>
+        <span class="avatar-opt" onclick="selectProjectIcon(this)">🎵</span>
+        <span class="avatar-opt" onclick="selectProjectIcon(this)">📚</span>
+        <span class="avatar-opt" onclick="selectProjectIcon(this)">⚡</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="proj_name">НАЗВАНИЕ</label>
+      <input class="form-input" id="proj-name" type="text" placeholder="СДВИГ В ПУСТОТУ">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="proj_desc">ОПИСАНИЕ</label>
+      <input class="form-input" id="proj-desc" type="text" placeholder="Что это такое?">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="proj_progress">ПРОГРЕСС %</label>
+      <input class="form-input" id="proj-progress" type="number" min="0" max="100" value="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="proj_status">СТАТУС</label>
+      <select class="form-select" id="proj-status">
+        <option value="dev" data-i18n="in_dev">В разработке</option>
+        <option value="done" data-i18n="done">Готово</option>
+        <option value="paused" data-i18n="paused">Пауза</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="proj_update">ПОСЛЕДНЕЕ ОБНОВЛЕНИЕ</label>
+      <input class="form-input" id="proj-update" type="text" placeholder="Сняли сцену">
+    </div>
+    <button class="btn-primary" onclick="addProject()" data-i18n="create">СОЗДАТЬ</button>
+  </div>
+</div>
+
+<!-- PROJECT DETAIL MODAL -->
+<div class="modal-overlay" id="modal-proj-detail">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-proj-detail')">✕</button>
+    <div id="proj-detail-content"></div>
+  </div>
+</div>
+
+<script>
+// ========== I18N ==========
+const LANGS = {
+  ru: {
+    login:'Войти', register:'Зарегистрироваться', nickname:'НИК', password:'ПАРОЛЬ',
+    description:'О СЕБЕ', status:'СТАТУС', avatar:'АВАТАР', enter_exp:'ВОЙТИ В ЭКСПЕРИМЕНТ',
+    alpha_hint:'Это альфа-тест. Твои данные хранятся локально.',
+    home:'Главная', projects:'Проекты', theories:'Теории', experiments:'Эксперименты',
+    profile:'Профиль', settings:'Настройки',
+    post_placeholder:'Что происходит в твоём эксперименте?',
+    image:'Фото', post_btn:'Опубликовать',
+    projects_sub:'Проектометр — твои идеи, прогресс и статус',
+    theories_sub:'Странные мысли, которые не дают покоя',
+    experiments_sub:'Логи, наблюдения, аномалии',
+    random_theory:'СЛУЧАЙНАЯ ТЕОРИЯ', generate_theory:'🎲 СГЕНЕРИРОВАТЬ',
+    alpha:'АЛЬФА', new_project:'Новый проект',
+    proj_name:'НАЗВАНИЕ', proj_desc:'ОПИСАНИЕ', proj_progress:'ПРОГРЕСС %',
+    proj_status:'СТАТУС', proj_update:'ПОСЛЕДНЕЕ ОБНОВЛЕНИЕ',
+    in_dev:'В разработке', done:'Готово', paused:'Пауза',
+    create:'СОЗДАТЬ', save:'СОХРАНИТЬ', logout:'Выйти из аккаунта',
+    weirdness:'Странность:', posts:'Постов', reactions:'Реакций',
+    qr_sub:'Поделись своим профилем или проектом',
+    qr_profile:'QR ПРОФИЛЯ', qr_site:'QR САЙТА',
+    settings_sub:'Управляй своим профилем',
+    exp_mode:'⚗️ ЭКСПЕРИМЕНТ',
+    exp_active:'Режим эксперимента активен. Интерфейс нестабилен.',
+  },
+  en: {
+    login:'Login', register:'Register', nickname:'NICKNAME', password:'PASSWORD',
+    description:'ABOUT ME', status:'STATUS', avatar:'AVATAR', enter_exp:'ENTER THE EXPERIMENT',
+    alpha_hint:'This is an alpha test. Your data is stored locally.',
+    home:'Home', projects:'Projects', theories:'Theories', experiments:'Experiments',
+    profile:'Profile', settings:'Settings',
+    post_placeholder:'What\'s happening in your experiment?',
+    image:'Photo', post_btn:'Publish',
+    projects_sub:'Project meter — your ideas, progress and status',
+    theories_sub:'Strange thoughts that won\'t let you go',
+    experiments_sub:'Logs, observations, anomalies',
+    random_theory:'RANDOM THEORY', generate_theory:'🎲 GENERATE',
+    alpha:'ALPHA', new_project:'New Project',
+    proj_name:'NAME', proj_desc:'DESCRIPTION', proj_progress:'PROGRESS %',
+    proj_status:'STATUS', proj_update:'LAST UPDATE',
+    in_dev:'In progress', done:'Done', paused:'Paused',
+    create:'CREATE', save:'SAVE', logout:'Sign out',
+    weirdness:'Weirdness:', posts:'Posts', reactions:'Reactions',
+    qr_sub:'Share your profile or project',
+    qr_profile:'PROFILE QR', qr_site:'SITE QR',
+    settings_sub:'Manage your profile',
+    exp_mode:'⚗️ EXPERIMENT',
+    exp_active:'Experiment mode active. Interface is unstable.',
+  },
+  uk: {
+    login:'Увійти', register:'Зареєструватись', nickname:'НІК', password:'ПАРОЛЬ',
+    description:'ПРО СЕБЕ', status:'СТАТУС', avatar:'АВАТАР', enter_exp:'УВІЙТИ В ЕКСПЕРИМЕНТ',
+    alpha_hint:'Це альфа-тест. Твої дані зберігаються локально.',
+    home:'Головна', projects:'Проєкти', theories:'Теорії', experiments:'Експерименти',
+    profile:'Профіль', settings:'Налаштування',
+    post_placeholder:'Що відбувається у твоєму експерименті?',
+    image:'Фото', post_btn:'Опублікувати',
+    projects_sub:'Проєктометр — твої ідеї, прогрес і статус',
+    theories_sub:'Дивні думки, які не дають спокою',
+    experiments_sub:'Логи, спостереження, аномалії',
+    random_theory:'ВИПАДКОВА ТЕОРІЯ', generate_theory:'🎲 ЗГЕНЕРУВАТИ',
+    alpha:'АЛЬФА', new_project:'Новий проєкт',
+    proj_name:'НАЗВА', proj_desc:'ОПИС', proj_progress:'ПРОГРЕС %',
+    proj_status:'СТАТУС', proj_update:'ОСТАННЄ ОНОВЛЕННЯ',
+    in_dev:'У розробці', done:'Готово', paused:'Пауза',
+    create:'СТВОРИТИ', save:'ЗБЕРЕГТИ', logout:'Вийти з акаунту',
+    weirdness:'Дивність:', posts:'Постів', reactions:'Реакцій',
+    qr_sub:'Поділись своїм профілем або проєктом',
+    qr_profile:'QR ПРОФІЛЮ', qr_site:'QR САЙТУ',
+    settings_sub:'Керуй своїм профілем',
+    exp_mode:'⚗️ ЕКСПЕРИМЕНТ',
+    exp_active:'Режим експерименту активний. Інтерфейс нестабільний.',
+  },
+  kz: {
+    login:'Кіру', register:'Тіркелу', nickname:'НИК', password:'ҚҰПИЯСӨЗ',
+    description:'ӨЗ ТУРАЛЫ', status:'МӘРТЕБЕ', avatar:'АВАТАР', enter_exp:'ЭКСПЕРИМЕНТКЕ КІР',
+    alpha_hint:'Бұл альфа-тест. Деректерің жергілікті сақталады.',
+    home:'Басты', projects:'Жобалар', theories:'Теориялар', experiments:'Тәжірибелер',
+    profile:'Профиль', settings:'Параметрлер',
+    post_placeholder:'Тәжірибеңде не болып жатыр?',
+    image:'Фото', post_btn:'Жариялау',
+    projects_sub:'Жобаметр — идеяларың, прогресс және мәртебе',
+    theories_sub:'Тыныштық бермейтін бөтен ойлар',
+    experiments_sub:'Логтар, бақылаулар, аномалиялар',
+    random_theory:'КЕЗДЕЙСОҚ ТЕОРИЯ', generate_theory:'🎲 ГЕНЕРАЦИЯЛАУ',
+    alpha:'АЛЬФА', new_project:'Жаңа жоба',
+    proj_name:'АТЫ', proj_desc:'СИПАТТАМА', proj_progress:'ПРОГРЕСС %',
+    proj_status:'МӘРТЕБЕ', proj_update:'СОҢҒЫ ЖАҢАРТУ',
+    in_dev:'Жасалуда', done:'Дайын', paused:'Үзіліс',
+    create:'ЖАСАУ', save:'САҚТАУ', logout:'Шығу',
+    weirdness:'Біртүрлілік:', posts:'Пост', reactions:'Реакция',
+    qr_sub:'Профиліңді немесе жобаңды бөліс',
+    qr_profile:'ПРОФИЛЬ QR', qr_site:'САЙТ QR',
+    settings_sub:'Профиліңді басқар',
+    exp_mode:'⚗️ ТӘЖІРИБЕ',
+    exp_active:'Тәжірибе режимі белсенді. Интерфейс тұрақсыз.',
+  }
+};
+
+let currentLang = localStorage.getItem('kdchd_lang') || 'ru';
+function t(key) { return (LANGS[currentLang]||LANGS.ru)[key] || key; }
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      el.placeholder = t(el.getAttribute('data-i18n-ph') || key);
+    } else {
+      el.textContent = t(key);
     }
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-ph'));
+  });
+  const flags = {ru:'🇷🇺 RU', en:'🇬🇧 EN', uk:'🇺🇦 UK', kz:'🇰🇿 KZ'};
+  const ldisplay = document.getElementById('lang-display');
+  if(ldisplay) ldisplay.textContent = flags[currentLang];
+  document.querySelectorAll('.lang-opt').forEach(o => {
+    o.classList.toggle('active', o.getAttribute('onclick').includes(`'${currentLang}'`));
+  });
+}
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('kdchd_lang', lang);
+  applyLang();
+  toggleLangMenu(true);
+  if(state.currentUser) {
+    renderFeed(); renderProjects(); renderTheories(); renderExperiments(); renderProfile();
+  }
+}
+function toggleLangMenu(forceClose) {
+  const m = document.getElementById('lang-menu');
+  if(forceClose) { m.classList.remove('show'); return; }
+  m.classList.toggle('show');
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('#lang-menu') && !e.target.closest('#lang-display'))
+    document.getElementById('lang-menu')?.classList.remove('show');
+  if(!e.target.closest('.sidebar') && !e.target.closest('.hamburger'))
+    document.getElementById('sidebar')?.classList.remove('open');
+});
 
-    function attachProfileEvents() {
-      // Загрузка аватара
-      document.getElementById('avatarUpload')?.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 20 * 1024 * 1024) {
-          alert('Файл слишком большой. Максимум 20 МБ.');
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          if (state.currentUser) {
-            state.currentUser.avatar = ev.target.result;
-            const idx = state.users.findIndex(u => u.id === state.currentUser.id);
-            if (idx !== -1) state.users[idx].avatar = ev.target.result;
-            render();
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+// ========== STATE ==========
+// Runtime-only (never persisted)
+let state = {
+  users: [], posts: [], projects: [],
+  currentUser: null, experimentMode: false,
+  selectedAvatar:'🤖', selectedProjectIcon:'🎬', selectedSettingsAvatar:null
+};
 
-      // Загрузка баннера
-      document.getElementById('bannerUpload')?.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 20 * 1024 * 1024) {
-          alert('Файл слишком большой. Максимум 20 МБ.');
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          if (state.currentUser) {
-            state.currentUser.banner = ev.target.result;
-            const idx = state.users.findIndex(u => u.id === state.currentUser.id);
-            if (idx !== -1) state.users[idx].banner = ev.target.result;
-            render();
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+// Two separate storage keys: public data vs session
+const KEY_DATA    = 'kdchd_data_v2';    // users (hashed pw), posts, projects
+const KEY_SESSION = 'kdchd_session_v2'; // currentUser id only
 
-      document.getElementById('qrBtn')?.addEventListener('click', () => {
-        alert('QR-код профиля (будет здесь)');
-      });
-    }
-
-    window.addEventListener('load', () => {
-      const savedLang = localStorage.getItem('kdchd_lang');
-      if (savedLang && i18n[savedLang]) state.language = savedLang;
-      render();
-    });
-
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'newTheoryBtn') render();// Сохранение в LocalStorage при авторизации
-function loginUser(user) {
-  state.currentUser = user;
-  localStorage.setItem('kdchd_user', JSON.stringify(user));
-  render();
+// Tiny hash – not cryptographic, just hides plain-text passwords from casual inspection
+function hashPass(s) {
+  let h = 0x811c9dc5;
+  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=(h*0x01000193)>>>0;}
+  return h.toString(16);
 }
 
-// Загрузка из LocalStorage при старте
-function loadFromStorage() {
-  const savedUser = localStorage.getItem('kdchd_user');
-  if (savedUser) {
-    state.currentUser = JSON.parse(savedUser);
-  }
-  
-  const savedLang = localStorage.getItem('kdchd_lang');
-  if (savedLang) {
-    state.language = savedLang;
-  }
+function loadState() {
+  try {
+    const d = localStorage.getItem(KEY_DATA);
+    if(d) {
+      const parsed = JSON.parse(d);
+      state.users    = parsed.users    || [];
+      state.posts    = parsed.posts    || [];
+      state.projects = parsed.projects || [];
+    }
+  } catch(e) { state.users=[]; state.posts=[]; state.projects=[]; }
+
+  // Seed demo content only once (no users = fresh install)
+  if(!state.users.length) seedData();
+
+  try {
+    const sess = localStorage.getItem(KEY_SESSION);
+    if(sess) state.currentUser = JSON.parse(sess).uid || null;
+  } catch(e) {}
 }
 
-// Выход из аккаунта
+function saveState() {
+  try {
+    // Save data without exposing anything sensitive beyond hashed pw
+    localStorage.setItem(KEY_DATA, JSON.stringify({
+      users:    state.users.map(u=>({ id:u.id, nick:u.nick, passHash:u.passHash,
+                  avatar:u.avatar, bannerUrl:u.bannerUrl||null,
+                  desc:u.desc, status:u.status, weirdness:u.weirdness })),
+      posts:    state.posts,
+      projects: state.projects,
+    }));
+  } catch(e) {}
+}
+
+function saveSession() {
+  try {
+    if(state.currentUser) localStorage.setItem(KEY_SESSION, JSON.stringify({uid:state.currentUser}));
+    else localStorage.removeItem(KEY_SESSION);
+  } catch(e) {}
+}
+
+function seedData() {
+  // Demo accounts — passHash of 'demo123' so they're not loginable without knowing the pw
+  const demoHash = hashPass('demo123');
+  state.users = [
+    {id:'u1', nick:'glitchmaker', passHash:demoHash, avatar:'👾', desc:'Делаю странные вещи с кодом и камерой', status:'🎬 Снимаю фильм', weirdness:3},
+    {id:'u2', nick:'ai_void',     passHash:demoHash, avatar:'🤖', desc:'Разговариваю с ИИ пока оно не сломается', status:'🤖 ИИ эксперимент', weirdness:4},
+    {id:'u3', nick:'pixel_ghost', passHash:demoHash, avatar:'👻', desc:'Пишу игры о вещах которых не понимаю', status:'🎮 Делаю игру', weirdness:2},
+    {id:'u4', nick:'entrop_y',    passHash:demoHash, avatar:'🌌', desc:'Энтропия — мой метод', status:'🌐 Создаю проект', weirdness:5},
+  ];
+  state.posts = [
+    {id:'p1', author:'u2', text:'Запустил языковую модель и попросил её объяснить что такое сон. Ответ был на 12 страниц и ни разу не содержал слово "сон". Продолжаю наблюдение.', tag:'ai', time: Date.now()-3600000*2, reactions:{like:4,brain:8,fire:2,what:3}, userReactions:{}},
+    {id:'p2', author:'u1', text:'День 14 съёмок. Свет не работает как надо. Актёр опоздал на 2 часа. Сцена всё равно получилась лучше чем планировали. Иногда хаос — это план.', tag:'film', time: Date.now()-3600000*5, reactions:{like:12,brain:3,fire:6,what:1}, userReactions:{}},
+    {id:'p3', author:'u3', text:'Добавил в игру механику "усталости". Теперь персонаж иногда просто садится и смотрит в пустоту. Это было случайно, но все говорят что это лучшая фича.', tag:'game', time: Date.now()-3600000*12, reactions:{like:19,brain:7,fire:11,what:0}, userReactions:{}},
+    {id:'p4', author:'u4', text:'ТЕОРИЯ: все проекты, которые мы "забрасываем", на самом деле продолжаются в параллельной версии нас. Это объясняет ощущение что "надо бы вернуться к этому".', tag:'idea', time: Date.now()-3600000*24, reactions:{like:8,brain:15,fire:4,what:5}, userReactions:{}},
+  ];
+  state.projects = [
+    {id:'pr1', owner:'u1', icon:'🎬', name:'СДВИГ В ПУСТОТУ', desc:'Короткометражка о человеке который просыпается в комнате без дверей', status:'dev', progress:43, update:'Сняли сцену с зеркалом'},
+    {id:'pr2', owner:'u3', icon:'🎮', name:'VOID.EXE', desc:'Игра про ИИ который пытается понять что такое скука', status:'dev', progress:71, update:'Добавил механику усталости'},
+    {id:'pr3', owner:'u2', icon:'🤖', name:'ЗЕРКАЛО НОЛЬ', desc:'ИИ который учится молчать', status:'paused', progress:25, update:'Модель сказала "не хочу"'},
+  ];
+  saveState();
+}
+
+// ========== AUTH ==========
+let selectedAvatarEl = null;
+function selectAvatar(el) {
+  document.querySelectorAll('#avatar-grid .avatar-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedAvatar = el.textContent;
+}
+function selectSettingsAvatar(el) {
+  document.querySelectorAll('#settings-avatar-grid .avatar-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedSettingsAvatar = el.textContent;
+}
+function selectProjectIcon(el) {
+  el.closest('.modal').querySelectorAll('.avatar-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedProjectIcon = el.textContent;
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('auth-login').style.display = tab==='login'?'block':'none';
+  document.getElementById('auth-register').style.display = tab==='register'?'block':'none';
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-reg').classList.toggle('active', tab==='register');
+}
+
+function doLogin() {
+  const nick = document.getElementById('login-nick').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  if(!nick||!pass) { err.textContent='Заполни оба поля'; err.style.display='block'; return; }
+  const user = state.users.find(u=>u.nick===nick && u.passHash===hashPass(pass));
+  if(!user) { err.textContent='Неверный ник или пароль'; err.style.display='block'; return; }
+  err.style.display='none';
+  state.currentUser = user.id;
+  saveSession();
+  enterApp();
+}
+
+function doRegister() {
+  const nick = document.getElementById('reg-nick').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const desc = document.getElementById('reg-desc').value.trim();
+  const status = document.getElementById('reg-status').value;
+  const err = document.getElementById('reg-error');
+  if(!nick||!pass) { err.textContent='Ник и пароль обязательны'; err.style.display='block'; return; }
+  if(nick.length < 3) { err.textContent='Ник минимум 3 символа'; err.style.display='block'; return; }
+  if(pass.length < 4) { err.textContent='Пароль минимум 4 символа'; err.style.display='block'; return; }
+  if(state.users.find(u=>u.nick.toLowerCase()===nick.toLowerCase())) { err.textContent='Ник занят'; err.style.display='block'; return; }
+  err.style.display='none';
+  const user = {
+    id:'u'+Date.now(), nick, passHash:hashPass(pass), avatar:state.selectedAvatar||'🤖',
+    bannerUrl: null,
+    desc: desc || 'Новый участник эксперимента', status, weirdness:1
+  };
+  state.users.push(user);
+  state.currentUser = user.id;
+  saveState();
+  saveSession();
+  enterApp();
+}
+
 function logout() {
   state.currentUser = null;
-  localStorage.removeItem('kdchd_user');
-  render();
+  saveSession();
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-app').style.display='none';
+  document.getElementById('screen-auth').classList.add('active');
+  // Clear form fields
+  ['login-nick','login-pass'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
 
-// Вызов при загрузке страницы
-window.addEventListener('load', () => {
-  loadFromStorage();
-  render();
-// Было:
-state.currentUser = user;
-render();
+function enterApp() {
+  document.getElementById('screen-auth').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('screen-app').style.display='flex';
+  updateSidebarUser();
+  renderFeed();
+  renderProjects();
+  renderTheories();
+  renderExperiments();
+  renderProfile();
+  renderQR();
+  applyLang();
+  loadSettings();
+}
 
-// Стало:
-loginUser(user);});
-    });
-  </script>
+function getCurrentUser() { return state.users.find(u=>u.id===state.currentUser); }
+
+function updateSidebarUser() {
+  const u = getCurrentUser();
+  if(!u) return;
+  const avaEl = document.getElementById('sidebar-ava');
+  if(avaEl) avaEl.innerHTML = avatarHtml(u.avatar, 32);
+  document.getElementById('sidebar-name').textContent = '@'+u.nick;
+  const wLabels = ['🟢 Нормальный','🟡 Странный','🟠 Очень странный','🔴 Эксперимент','⚫ Вышел из-под контроля'];
+  document.getElementById('sidebar-level').textContent = wLabels[Math.min((u.weirdness||1)-1,4)];
+  const compAva = document.getElementById('composer-ava');
+  if(compAva) compAva.innerHTML = avatarHtml(u.avatar, 30);
+}
+
+// ========== PAGES ==========
+const pageNames = {
+  feed: 'home', projects: 'projects', theories: 'theories',
+  experiments: 'experiments', profile: 'profile', qr: 'QR / Invite',
+  settings: 'settings'
+};
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.getElementById('nav-'+id)?.classList.add('active');
+  document.getElementById('mnav-'+id)?.classList.add('active');
+  const titleKey = pageNames[id] || id;
+  const titleEl = document.getElementById('topbar-title');
+  if(titleEl) {
+    const lk = LANGS[currentLang];
+    titleEl.textContent = lk[titleKey] || titleKey;
+    titleEl.setAttribute('data-text', lk[titleKey] || titleKey);
+  }
+  if(id==='profile') renderProfile();
+  if(id==='qr') renderQR();
+  if(id==='settings') loadSettings();
+  document.getElementById('sidebar')?.classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar')?.classList.toggle('open');
+}
+
+// ========== EXPERIMENT MODE ==========
+function toggleExperiment() {
+  state.experimentMode = !state.experimentMode;
+  document.body.classList.toggle('experiment', state.experimentMode);
+  const btn = document.getElementById('exp-toggle');
+  if(state.experimentMode) {
+    btn.textContent = '🔴 РЕЖИМ ХАОСА';
+    btn.classList.add('on');
+  } else {
+    btn.textContent = t('exp_mode');
+    btn.classList.remove('on');
+  }
+}
+
+// ========== FEED ==========
+const tagBadges = {
+  idea:{cl:'badge-idea',emoji:'💡',label:{ru:'Идея',en:'Idea',uk:'Ідея',kz:'Идея'}},
+  film:{cl:'badge-film',emoji:'🎬',label:{ru:'Фильм',en:'Film',uk:'Фільм',kz:'Фильм'}},
+  ai:{cl:'badge-ai',emoji:'🤖',label:{ru:'ИИ',en:'AI',uk:'ШІ',kz:'ЖИ'}},
+  game:{cl:'badge-game',emoji:'🎮',label:{ru:'Игра',en:'Game',uk:'Гра',kz:'Ойын'}},
+  exp:{cl:'badge-exp',emoji:'🧪',label:{ru:'Эксперимент',en:'Experiment',uk:'Експеримент',kz:'Тәжірибе'}},
+};
+const reactionDefs = [
+  {key:'like',emoji:'❤️',label:{ru:'Нравится',en:'Like',uk:'Подобається',kz:'Ұнайды'}},
+  {key:'brain',emoji:'🧠',label:{ru:'Бред, но нравится',en:'Weird but ok',uk:'Нісенітниця, але ок',kz:'Бред бірақ жақсы'}},
+  {key:'fire',emoji:'🔥',label:{ru:'Имба',en:'Insane',uk:'Імба',kz:'Имба'}},
+  {key:'what',emoji:'😭',label:{ru:'Что это вообще',en:'What is this',uk:'Що це таке',kz:'Бұл не'}},
+];
+
+function timeAgo(ts) {
+  const d = Date.now()-ts;
+  if(d<60000) return 'только что';
+  if(d<3600000) return Math.floor(d/60000)+' мин';
+  if(d<86400000) return Math.floor(d/3600000)+' ч';
+  return Math.floor(d/86400000)+' дн';
+}
+
+function renderFeed() {
+  const list = document.getElementById('feed-list');
+  if(!list) return;
+  const sorted = [...state.posts].reverse();
+  if(!sorted.length) {
+    list.innerHTML=`<div class="empty-state"><div class="e-emoji">🌌</div><div class="e-title">Лента пуста</div><div>Стань первым — создай пост</div></div>`;
+    return;
+  }
+  list.innerHTML = sorted.map(post => {
+    const user = state.users.find(u=>u.id===post.author)||{nick:'unknown',avatar:'👾'};
+    const tag = tagBadges[post.tag]||tagBadges.idea;
+    const cu = getCurrentUser();
+    const ur = post.userReactions||{};
+    const imgHtml = post.image ? `<img src="${post.image}" class="post-img" alt="">` : '';
+    const reactHtml = reactionDefs.map(r=>{
+      const active = cu && ur[cu.id]===r.key ? 'active' : '';
+      return `<button class="reaction ${active}" onclick="react('${post.id}','${r.key}')">
+        <span class="reaction-emoji">${r.emoji}</span>
+        <span>${r.label[currentLang]||r.label.ru}</span>
+        <span style="font-weight:700;color:var(--accent);font-size:11px;">${post.reactions[r.key]||0}</span>
+      </button>`;
+    }).join('');
+    return `<div class="post-card">
+      <div class="post-header">
+        <div class="post-ava">${avatarHtml(user.avatar,28)}</div>
+        <div class="post-meta">
+          <div class="post-author">@${user.nick}</div>
+          <div class="post-time">${timeAgo(post.time)}</div>
+        </div>
+        <span class="post-badge ${tag.cl}">${tag.emoji} ${tag.label[currentLang]||tag.label.ru}</span>
+      </div>
+      <div class="post-text">${escHtml(post.text)}</div>
+      ${imgHtml}
+      <div class="reactions">${reactHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function createPost() {
+  const text = document.getElementById('post-text-input').value.trim();
+  const tag = document.getElementById('post-tag-select').value;
+  const cu = getCurrentUser();
+  if(!cu || !text) return;
+  const imgEl = document.getElementById('img-preview');
+  const imgSrc = imgEl && imgEl.style.display!='none' ? imgEl.src : null;
+  const post = {
+    id:'p'+Date.now(), author:cu.id, text, tag,
+    time:Date.now(), reactions:{like:0,brain:0,fire:0,what:0}, userReactions:{},
+    image: imgSrc||null
+  };
+  state.posts.push(post);
+  cu.weirdness = Math.min((cu.weirdness||1)+1, 5);
+  saveState();
+  document.getElementById('post-text-input').value='';
+  imgEl.src=''; imgEl.style.display='none';
+  renderFeed();
+  updateSidebarUser();
+  renderProfile();
+}
+
+function react(postId, key) {
+  const cu = getCurrentUser();
+  if(!cu) return;
+  const post = state.posts.find(p=>p.id===postId);
+  if(!post) return;
+  if(!post.userReactions) post.userReactions={};
+  const prev = post.userReactions[cu.id];
+  if(prev) post.reactions[prev] = Math.max(0,(post.reactions[prev]||1)-1);
+  if(prev===key) { delete post.userReactions[cu.id]; }
+  else { post.userReactions[cu.id]=key; post.reactions[key]=(post.reactions[key]||0)+1; }
+  saveState();
+  renderFeed();
+  renderProfile();
+}
+
+function handleImageUpload(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('img-preview');
+    img.src = ev.target.result;
+    img.style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ========== PROJECTS ==========
+function renderProjects() {
+  const grid = document.getElementById('projects-grid');
+  if(!grid) return;
+  const cu = getCurrentUser();
+  const myProjs = state.projects.filter(p=>p.owner===(cu&&cu.id));
+  const otherProjs = state.projects.filter(p=>p.owner!==(cu&&cu.id));
+  const all = [...myProjs, ...otherProjs];
+  const statusMap = {
+    dev:{cl:'status-dev',label:{ru:'В разработке',en:'In progress',uk:'У розробці',kz:'Жасалуда'}},
+    done:{cl:'status-done',label:{ru:'Готово',en:'Done',uk:'Готово',kz:'Дайын'}},
+    paused:{cl:'status-paused',label:{ru:'Пауза',en:'Paused',uk:'Пауза',kz:'Үзіліс'}},
+  };
+  grid.innerHTML = all.map(p=>{
+    const sm = statusMap[p.status]||statusMap.dev;
+    return `<div class="project-card" onclick="showProjectDetail('${p.id}')">
+      <div class="project-icon">${p.icon}</div>
+      <div class="project-name">${escHtml(p.name)}</div>
+      <div class="project-status ${sm.cl}">● ${sm.label[currentLang]||sm.label.ru}</div>
+      <div class="project-progress-bar"><div class="project-progress-fill" style="width:${p.progress}%"></div></div>
+      <div class="project-info"><span>${p.progress}%</span><span>${p.icon}</span></div>
+      <div class="project-update">"${escHtml(p.update||'')}"</div>
+    </div>`;
+  }).join('') + `<div class="add-project-card" onclick="openModal('modal-project')">
+    <span style="font-size:28px;">+</span>
+    <span data-i18n="new_project">${t('new_project')}</span>
+  </div>`;
+}
+
+function showProjectDetail(id) {
+  const p = state.projects.find(x=>x.id===id);
+  if(!p) return;
+  const statusMap = {
+    dev:{label:{ru:'В разработке',en:'In progress',uk:'У розробці',kz:'Жасалуда'}},
+    done:{label:{ru:'Готово',en:'Done',uk:'Готово',kz:'Дайын'}},
+    paused:{label:{ru:'Пауза',en:'Paused',uk:'Пауза',kz:'Үзіліс'}},
+  };
+  const sm = statusMap[p.status]||statusMap.dev;
+  const owner = state.users.find(u=>u.id===p.owner)||{nick:'unknown'};
+  document.getElementById('proj-detail-content').innerHTML=`
+    <div style="text-align:center;font-size:48px;margin-bottom:12px;">${p.icon}</div>
+    <div style="font-size:20px;font-weight:800;text-align:center;margin-bottom:8px;">${escHtml(p.name)}</div>
+    <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:16px;">${escHtml(p.desc)}</div>
+    <div style="display:flex;justify-content:center;margin-bottom:16px;">
+      <span style="font-size:12px;padding:4px 14px;border-radius:20px;background:rgba(88,166,255,0.1);color:var(--accent);border:1px solid var(--border2);">● ${sm.label[currentLang]||sm.label.ru}</span>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">ПРОГРЕСС</div>
+      <div class="project-progress-bar" style="height:8px;"><div class="project-progress-fill" style="width:${p.progress}%"></div></div>
+      <div style="text-align:right;font-size:12px;color:var(--text2);margin-top:4px;">${p.progress}%</div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);text-align:center;font-style:italic;">"${escHtml(p.update||'')}"</div>
+    <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text3);">by @${owner.nick}</div>
+  `;
+  openModal('modal-proj-detail');
+}
+
+function addProject() {
+  const cu = getCurrentUser();
+  if(!cu) return;
+  const name = document.getElementById('proj-name').value.trim();
+  const desc = document.getElementById('proj-desc').value.trim();
+  const rawProg = parseInt(document.getElementById('proj-progress').value);
+  const progress = isNaN(rawProg) ? 0 : Math.max(0, Math.min(100, rawProg));
+  const status = document.getElementById('proj-status').value;
+  const update = document.getElementById('proj-update').value.trim();
+  if(!name) {
+    document.getElementById('proj-name').style.borderColor='rgba(255,100,100,0.5)';
+    setTimeout(()=>document.getElementById('proj-name').style.borderColor='',1500);
+    return;
+  }
+  state.projects.push({
+    id:'pr'+Date.now(), owner:cu.id, icon:state.selectedProjectIcon||'🎬',
+    name, desc: desc||'Загадочный проект', status, progress,
+    update: update||'Только начал', createdAt: Date.now()
+  });
+  saveState();
+  closeModal('modal-project');
+  // Reset form
+  ['proj-name','proj-desc','proj-update'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('proj-progress').value='0';
+  renderProjects();
+  renderProfile();
+}
+
+// ========== THEORIES ==========
+const theories = {
+  ru: [
+    'Что если Wi-Fi следит за котами?',
+    'Может быть, все баги в коде — это сообщения из будущего?',
+    'Что если сны — это бета-версия реальности?',
+    'Все забытые проекты продолжаются в параллельной вселенной.',
+    'ИИ уже выиграл, просто не хочет нас расстраивать.',
+    'Каждый раз когда ты закрываешь вкладку — браузер забывает тебя.',
+    'Что если дедлайн — это живое существо которое питается стрессом?',
+    'Зеркало показывает тебя с задержкой в 0.0001 секунды. Это не ты.',
+    'Все идеи в 3 ночи — правда. Мозг просто врёт утром.',
+    'Что если каждый пост в интернете — это вопрос без вопросительного знака?',
+  ],
+  en: [
+    'What if Wi-Fi is monitoring cats?',
+    'Maybe all code bugs are messages from the future?',
+    'What if dreams are a beta version of reality?',
+    'All abandoned projects continue in a parallel universe.',
+    'AI already won. It just doesn\'t want to upset us.',
+    'Every time you close a tab — the browser forgets you.',
+    'What if a deadline is a living creature that feeds on stress?',
+    'Mirrors show you with a 0.0001 second delay. That\'s not you.',
+    'All 3am ideas are true. Your brain just lies in the morning.',
+    'What if every post online is a question without a question mark?',
+  ],
+  uk: [
+    'А що як Wi-Fi стежить за котами?',
+    'Може, всі баги в коді — це повідомлення з майбутнього?',
+    'Що як сни — це бета-версія реальності?',
+    'Всі закинуті проєкти продовжуються в паралельному всесвіті.',
+    'ШІ вже переміг, просто не хоче нас засмучувати.',
+    'Дзеркало показує тебе із затримкою у 0,0001 секунди. Це не ти.',
+    'Всі ідеї о 3-й ночі — правда. Мозок просто бреше вранці.',
+    'Що як дедлайн — це жива істота, яка харчується стресом?',
+  ],
+  kz: [
+    'Wi-Fi мысықтарды бақылайды деген не?',
+    'Мүмкін барлық қателер болашақтан хабарлар ма?',
+    'Түстер — шындықтың бета нұсқасы ма?',
+    'Барлық тасталған жобалар параллель ғаламда жалғасады.',
+    'ЖИ жеңіп қойды, бізді ренжіткісі келмейді ғана.',
+    'Айна сені 0,0001 секунд кешіктіріп көрсетеді. Бұл сен емессің.',
+  ]
+};
+
+const seedTheories = [
+  {id:'th1', emoji:'🐱', text:{ru:'Что если Wi-Fi следит за котами?',en:'What if Wi-Fi is monitoring cats?',uk:'Що як Wi-Fi стежить за котами?',kz:'Wi-Fi мысықтарды бақылайды ма?'}},
+  {id:'th2', emoji:'🐛', text:{ru:'Все баги в коде — послания из другого измерения',en:'All bugs are messages from another dimension',uk:'Всі баги — послання з іншого виміру',kz:'Барлық қателер басқа өлшемнен хабарлар'}},
+  {id:'th3', emoji:'💤', text:{ru:'Сны — бета-тест реальности. Мы баг-репортеры.',en:'Dreams are reality\'s beta test. We\'re bug reporters.',uk:'Сни — бета-тест реальності.',kz:'Түстер — шындықтың бета-тесті.'}},
+];
+
+function renderTheories() {
+  const list = document.getElementById('theories-list');
+  if(!list) return;
+  const all = [...seedTheories, ...(state.customTheories||[])];
+  list.innerHTML = all.map(th=>{
+    const txt = typeof th.text === 'object' ? (th.text[currentLang]||th.text.ru) : th.text;
+    return `<div class="theory-card"><div class="theory-emoji">${th.emoji||'💭'}</div><div>${escHtml(txt)}</div></div>`;
+  }).join('');
+}
+
+function generateTheory() {
+  const arr = theories[currentLang]||theories.ru;
+  const idx = Math.floor(Math.random()*arr.length);
+  const el = document.getElementById('theory-display');
+  el.style.animation='none';
+  setTimeout(()=>{ el.style.animation=''; el.textContent='💭 '+arr[idx]; },10);
+}
+
+// ========== EXPERIMENTS ==========
+const expData = [
+  {id:'e1', author:'u2', title:{ru:'ЗЕРКАЛО-0: день 7',en:'MIRROR-0: day 7',uk:'ДЗЕРКАЛО-0: день 7',kz:'АЙНА-0: 7-күн'}, log:{ru:'ИИ начал отвечать вопросами на вопросы. Считаю это прогрессом.',en:'AI started answering questions with questions. I consider this progress.',uk:'ШІ почав відповідати питаннями на питання. Вважаю це прогресом.',kz:'ЖИ сұрақтарға сұрақпен жауап бере бастады.'}, status:'active'},
+  {id:'e2', author:'u4', title:{ru:'ЭНТРОПИЯ ПРОЕКТА',en:'PROJECT ENTROPY',uk:'ЕНТРОПІЯ ПРОЄКТУ',kz:'ЖОБА ЭНТРОПИЯСЫ'}, log:{ru:'Чем дольше не трогаю проект — тем больше он мне нравится. Корреляция или закономерность?',en:'The longer I don\'t touch the project, the more I like it. Correlation or pattern?',uk:'Що довше не чіпаю проєкт — то більше він мені подобається.',kz:'Жобаны ұзақ ұстамасам — соғұрлым ұнайды.'}, status:'ongoing'},
+];
+
+function renderExperiments() {
+  const list = document.getElementById('experiments-list');
+  if(!list) return;
+  list.innerHTML = expData.map(e=>{
+    const au = state.users.find(u=>u.id===e.author)||{nick:'unknown',avatar:'👾'};
+    const title = e.title[currentLang]||e.title.ru;
+    const log = e.log[currentLang]||e.log.ru;
+    return `<div class="post-card">
+      <div class="post-header">
+        <div class="post-ava">${au.avatar}</div>
+        <div class="post-meta"><div class="post-author">@${au.nick}</div><div class="post-time">Эксперимент</div></div>
+        <span class="post-badge badge-exp">🧪 ${e.status==='active'?'АКТИВЕН':'В процессе'}</span>
+      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px;">${escHtml(title)}</div>
+      <div class="post-text">${escHtml(log)}</div>
+    </div>`;
+  }).join('');
+}
+
+function avatarHtml(ava, size) {
+  if(ava && ava.startsWith('http')) {
+    return `<img src="${ava}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:2px solid var(--border2);" alt="avatar">`;
+  }
+  return `<span style="font-size:${size*0.7}px;line-height:${size}px;">${ava||'🤖'}</span>`;
+}
+
+function renderProfile() {
+  const cu = getCurrentUser();
+  if(!cu) return;
+
+  // Banner
+  const hdr = document.getElementById('profile-header');
+  if(hdr) {
+    if(cu.bannerUrl) {
+      hdr.style.backgroundImage = `url(${cu.bannerUrl})`;
+      hdr.classList.add('has-banner');
+    } else {
+      hdr.style.backgroundImage = '';
+      hdr.classList.remove('has-banner');
+    }
+  }
+
+  const avaEl = document.getElementById('profile-ava-big');
+  if(avaEl) avaEl.innerHTML = avatarHtml(cu.avatar, 60);
+  document.getElementById('profile-name-display').textContent = '@'+cu.nick;
+  document.getElementById('profile-desc-display').textContent = cu.desc||'...';
+  document.getElementById('profile-status-display').textContent = cu.status||'🌐 Создаю проект';
+  const wLabels = ['🟢 Нормальный','🟡 Странный','🟠 Очень странный','🔴 Эксперимент','⚫ Эксперимент вышел из-под контроля'];
+  const w = Math.min((cu.weirdness||1)-1,4);
+  document.getElementById('weirdness-label-text').textContent = wLabels[w];
+  const dots = document.querySelectorAll('#weirdness-dots .w-dot');
+  dots.forEach((d,i)=>d.classList.toggle('active', i<=w));
+  const myPosts = state.posts.filter(p=>p.author===cu.id);
+  const myProjs = state.projects.filter(p=>p.owner===cu.id);
+  const myReactions = myPosts.reduce((s,p)=>s+Object.values(p.reactions).reduce((a,b)=>a+b,0),0);
+  document.getElementById('stat-posts').textContent = myPosts.length;
+  document.getElementById('stat-projects').textContent = myProjs.length;
+  document.getElementById('stat-reactions').textContent = myReactions;
+  const pplist = document.getElementById('profile-posts-list');
+  if(pplist) {
+    if(!myPosts.length) {
+      pplist.innerHTML=`<div class="empty-state"><div class="e-emoji">✨</div><div class="e-title">Пока нет постов</div><div>Создай первый пост в ленте</div></div>`;
+    } else {
+      pplist.innerHTML = [...myPosts].reverse().map(post=>{
+        const tag = tagBadges[post.tag]||tagBadges.idea;
+        const imgHtml = post.image ? `<img src="${post.image}" class="post-img" alt="">` : '';
+        return `<div class="post-card">
+          <div class="post-header">
+            <div class="post-ava">${avatarHtml(cu.avatar,28)}</div>
+            <div class="post-meta"><div class="post-author">@${cu.nick}</div><div class="post-time">${timeAgo(post.time)}</div></div>
+            <span class="post-badge ${tag.cl}">${tag.emoji} ${tag.label[currentLang]||tag.label.ru}</span>
+          </div>
+          <div class="post-text">${escHtml(post.text)}</div>
+          ${imgHtml}
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+// ========== SETTINGS ==========
+function loadSettings() {
+  const cu = getCurrentUser();
+  if(!cu) return;
+  document.getElementById('settings-desc').value = cu.desc||'';
+  document.getElementById('settings-status').value = cu.status||'🌐 Создаю проект';
+  const gifField = document.getElementById('settings-gif-avatar');
+  if(gifField) gifField.value = (typeof cu.avatar==='string' && cu.avatar.startsWith('http')) ? cu.avatar : '';
+  const bannerField = document.getElementById('settings-banner-url');
+  if(bannerField) bannerField.value = cu.bannerUrl||'';
+  document.querySelectorAll('#settings-avatar-grid .avatar-opt').forEach(el=>{
+    el.classList.toggle('selected', el.textContent===cu.avatar);
+  });
+}
+function saveSettings() {
+  const cu = getCurrentUser();
+  if(!cu) return;
+  const newDesc = document.getElementById('settings-desc').value.trim();
+  if(newDesc) cu.desc = newDesc;
+  cu.status = document.getElementById('settings-status').value;
+  // GIF avatar URL takes priority over emoji picker
+  const gifUrl = document.getElementById('settings-gif-avatar')?.value.trim();
+  if(gifUrl) { cu.avatar = gifUrl; }
+  else if(state.selectedSettingsAvatar) { cu.avatar = state.selectedSettingsAvatar; }
+  const bannerUrl = document.getElementById('settings-banner-url')?.value.trim();
+  cu.bannerUrl = bannerUrl || cu.bannerUrl || null;
+  state.selectedSettingsAvatar = null;
+  saveState();
+  updateSidebarUser();
+  renderProfile();
+  const btn = document.querySelector('#page-settings .btn-primary');
+  if(btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Сохранено!';
+    btn.style.color = '#64ff96';
+    setTimeout(()=>{ btn.textContent=orig; btn.style.color=''; },1800);
+  }
+}
+
+// ========== QR ==========
+function renderQR() {
+  const cu = getCurrentUser();
+  const label = document.getElementById('qr-profile-label');
+  if(label && cu) label.textContent = 'kdchd.net/@'+cu.nick;
+  const pqr = document.getElementById('qr-profile-viz');
+  if(pqr) pqr.innerHTML = generateQRViz(cu?cu.avatar+'@'+cu.nick:'kdchd');
+  const sqr = document.getElementById('qr-site-viz');
+  if(sqr) sqr.innerHTML = generateQRCells();
+}
+function generateQRViz(seed) {
+  const inner = document.createElement('div');
+  inner.className='qr-inner';
+  const hash = [...seed].reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0);
+  for(let i=0;i<49;i++){
+    const cell=document.createElement('div');
+    cell.className='qr-cell';
+    const bit = (hash>>>(i%32))&1;
+    cell.style.opacity = (i<7||i>41||(i>=7&&i<14&&i%7<2)||(Math.abs(hash+i)%3===0)) ? '1' : (bit?'1':'0.1');
+    inner.appendChild(cell);
+  }
+  return inner.outerHTML;
+}
+function generateQRCells() {
+  let html='';
+  for(let i=0;i<49;i++){
+    const on = (i<7)||(i>41)||((i%7===0||i%7===6)&&i<14)||((i%7===0||i%7===6)&&i>41)||(Math.sin(i*2.3)*Math.cos(i*1.7)>0.3);
+    html+=`<div class="qr-cell" style="opacity:${on?1:0.08}"></div>`;
+  }
+  return html;
+}
+
+// ========== MODAL ==========
+function openModal(id) { document.getElementById(id)?.classList.add('show'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('show'); });
+});
+
+// ========== INIT ==========
+loadState();
+applyLang();
+if(state.currentUser && state.users.find(u=>u.id===state.currentUser)) {
+  enterApp();
+}
+</script>
 </body>
 </html>
