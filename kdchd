@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>KDCHD NETWORK | Ранний доступ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0F1117;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 12px;
+    }
+
+    .kdchd-app {
+      max-width: 500px;
+      width: 100%;
+      background: #161B22;
+      border-radius: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 92vh;
+      max-height: 900px;
+      backdrop-filter: blur(12px);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .experiment-mode .kdchd-app {
+      animation: subtleGlitch 0.3s infinite;
+      box-shadow: 0 0 25px rgba(59,130,246,0.4);
+    }
+
+    @keyframes subtleGlitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-0.5px, 0.5px); }
+      40% { transform: translate(0.5px, -0.5px); }
+      60% { transform: translate(0); }
+      80% { transform: translate(0.3px, 0); }
+      100% { transform: translate(0); }
+    }
+
+    .main-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #2d3748 #0F1117;
+    }
+
+    .main-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .main-scroll::-webkit-scrollbar-track {
+      background: #0F1117;
+    }
+    .main-scroll::-webkit-scrollbar-thumb {
+      background: #3b82f6;
+      border-radius: 8px;
+    }
+
+    .glass-card {
+      background: rgba(22, 27, 34, 0.7);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      transition: 0.2s;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(59,130,246,0.3);
+    }
+
+    button {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #f1f5f9;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
+    }
+
+    button:hover {
+      background: #2563eb;
+      border-color: #3b82f6;
+      box-shadow: 0 0 18px #3b82f680;
+    }
+
+    .accent-btn {
+      background: #2563eb;
+      color: white;
+      font-weight: 600;
+      border: none;
+    }
+
+    input, textarea {
+      background: #0F1117;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      padding: 12px 16px;
+      color: white;
+      width: 100%;
+      margin: 8px 0;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px #3b82f640;
+    }
+
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 12px 8px;
+      background: rgba(15, 17, 23, 0.9);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .nav-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 20px;
+      color: #9ca3af;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-icon.active {
+      color: #3b82f6;
+      text-shadow: 0 0 12px #3b82f6;
+    }
+
+    .strange-level {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    .project-meter {
+      height: 6px;
+      background: #2d3748;
+      border-radius: 8px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #a78bfa);
+      border-radius: 8px;
+    }
+
+    .lang-selector {
+      display: flex;
+      gap: 6px;
+      margin: 8px 0;
+    }
+
+    /* Стили для профиля с баннером */
+    .profile-banner {
+      width: 100%;
+      height: 140px;
+      background: linear-gradient(135deg, #1e293b, #0F1117);
+      border-radius: 20px 20px 0 0;
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      font-size: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .avatar-upload {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 3px solid #161B22;
+      margin-top: -45px;
+      position: relative;
+      z-index: 2;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .avatar-upload img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .file-input-hidden {
+      display: none;
+    }
+
+    .upload-hint {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    @media (min-width: 768px) {
+      .kdchd-app {
+        max-width: 720px;
+      }
+      .profile-banner {
+        height: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="kdchd-app"></div>
+
+  <script type="module">
+    // ====================== KDCHD NETWORK – АВАТАРЫ И БАННЕРЫ ======================
+    const i18n = {
+      ru: {
+        home: "Главная", projects: "Проекты", theories: "Теории", experiments: "Эксперименты",
+        profile: "Профиль", settings: "Настройки", earlyAccess: "⚡ РАННИЙ ДОСТУП / ALPHA TEST",
+        createPost: "Создать пост", makeChaos: "СДЕЛАТЬ ХАОС", randomTheory: "🧠 СЛУЧАЙНАЯ ТЕОРИЯ",
+        loginExp: "ВОЙТИ В ЭКСПЕРИМЕНТ", register: "РЕГИСТРАЦИЯ", username: "Никнейм",
+        password: "Пароль", description: "Описание", strangeLevel: "Уровень странности",
+        changeAvatar: "Сменить аватар", changeBanner: "Сменить баннер",
+        maxSize: "Макс. размер: 20 МБ", reactions: { like: "❤️ Нравится", brain: "🧠 Бред, но нравится", fire: "🔥 Имба", cry: "😭 Что это вообще" }
+      },
+      en: {
+        home: "Home", projects: "Projects", theories: "Theories", experiments: "Experiments",
+        profile: "Profile", settings: "Settings", earlyAccess: "⚡ EARLY ACCESS / ALPHA TEST",
+        createPost: "Create post", makeChaos: "MAKE CHAOS", randomTheory: "🧠 RANDOM THEORY",
+        loginExp: "ENTER EXPERIMENT", register: "REGISTER", username: "Username",
+        password: "Password", description: "Bio", strangeLevel: "Strangeness Level",
+        changeAvatar: "Change avatar", changeBanner: "Change banner",
+        maxSize: "Max size: 20 MB", reactions: { like: "❤️ Like", brain: "🧠 Weird but cool", fire: "🔥 Fire", cry: "😭 What is this" }
+      },
+      uk: {
+        home: "Головна", projects: "Проєкти", theories: "Теорії", experiments: "Експерименти",
+        profile: "Профіль", settings: "Налаштування", earlyAccess: "⚡ РАННІЙ ДОСТУП / ALPHA TEST",
+        createPost: "Створити пост", makeChaos: "ЗРОБИТИ ХАОС", randomTheory: "🧠 ВИПАДКОВА ТЕОРІЯ",
+        loginExp: "УВІЙТИ В ЕКСПЕРИМЕНТ", register: "РЕЄСТРАЦІЯ", username: "Нікнейм",
+        password: "Пароль", description: "Опис", strangeLevel: "Рівень дивності",
+        changeAvatar: "Змінити аватар", changeBanner: "Змінити банер",
+        maxSize: "Макс. розмір: 20 МБ", reactions: { like: "❤️ Подобається", brain: "🧠 Маячня, але круто", fire: "🔥 Імба", cry: "😭 Що це взагалі" }
+      },
+      kz: {
+        home: "Басты", projects: "Жобалар", theories: "Теориялар", experiments: "Эксперименттер",
+        profile: "Профиль", settings: "Параметрлер", earlyAccess: "⚡ ЕРТЕ ҚОЛ ЖЕТКІЗУ / ALPHA TEST",
+        createPost: "Пост жасау", makeChaos: "ХАОС ЖАСАУ", randomTheory: "🧠 КЕЗДЕЙСОҚ ТЕОРИЯ",
+        loginExp: "ЭКСПЕРИМЕНТКЕ КІРУ", register: "ТІРКЕЛУ", username: "Лақап аты",
+        password: "Құпия сөз", description: "Сипаттама", strangeLevel: "Оғаштық деңгейі",
+        changeAvatar: "Аватарды өзгерту", changeBanner: "Баннерді өзгерту",
+        maxSize: "Макс. өлшем: 20 МБ", reactions: { like: "❤️ Ұнайды", brain: "🧠 Сандырақ, бірақ керемет", fire: "🔥 Имба", cry: "😭 Бұл не мүлде" }
+      }
+    };
+
+    const state = {
+      currentUser: null,
+      language: 'ru',
+      experimentMode: false,
+      currentPage: 'home',
+      users: [
+        { id: 1, username: "void_creator", avatar: "🎬", banner: null, desc: "Снимаю фильм во сне", status: "🎬 Снимаю фильм", strange: "🟠 Очень странный" },
+        { id: 2, username: "ai_phantom", avatar: "🤖", banner: null, desc: "ИИ учит меня говорить", status: "🤖 ИИ эксперимент", strange: "🔴 Эксперимент" },
+        { id: 3, username: "game_alice", avatar: "🎮", banner: null, desc: "Делаю игру про котов", status: "🎮 Делаю игру", strange: "🟡 Странный" },
+        { id: 4, username: "theory_x", avatar: "🌐", banner: null, desc: "Строю теории завтрака", status: "🌐 Создаю проект", strange: "⚫ Эксперимент вышел из-под контроля" },
+        { id: 5, username: "lost_project", avatar: "😭", banner: null, desc: "Забросил 3 идеи", status: "😭 Забросил проект", strange: "🟢 Нормальный" }
+      ],
+      posts: [
+        { id: 1, userId: 1, text: "Снял сцену в тумане. Получилось слишком странно.", image: null, reactions: { like: 2, brain: 4, fire: 1, cry: 0 } },
+        { id: 2, userId: 2, text: "Моя нейросеть теперь предсказывает дождь по котам.", image: null, reactions: { like: 3, brain: 5, fire: 2, cry: 1 } },
+        { id: 3, userId: 4, text: "Теория: облака это забытые мысли Wi-Fi роутеров.", image: null, reactions: { like: 6, brain: 9, fire: 3, cry: 2 } }
+      ],
+      projects: [
+        { name: "СДВИГ В ПУСТОТУ", status: "В разработке", progress: 43, lastUpdate: "Сняли сцену", creator: 1 }
+      ]
+    };
+
+    const t = (key) => {
+      const lang = i18n[state.language] || i18n.ru;
+      const keys = key.split('.');
+      let result = lang;
+      for (const k of keys) {
+        if (result && result[k] !== undefined) result = result[k];
+        else return key;
+      }
+      return result;
+    };
+
+    const randomTheories = [
+      "Что если Wi-Fi следит за котами?",
+      "Облака — это сохранённые сны старых телефонов.",
+      "Каждый раз когда ты чихаешь, где-то включается случайный свет.",
+      "Коты видят невидимые соцсети."
+    ];
+
+    function render() {
+      const app = document.getElementById('app');
+      if (!app) return;
+      const expClass = state.experimentMode ? 'experiment-mode' : '';
+
+      app.innerHTML = `
+        <div class="${expClass}" style="display: flex; flex-direction: column; height: 100%;">
+          <div style="padding: 12px; background: #0F1117; border-bottom: 1px solid #2d3748; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; font-size: 20px; letter-spacing: 1px;">KDCHD</span>
+            <span style="font-size: 12px; color: #3b82f6;">${t('earlyAccess')}</span>
+            <div class="lang-selector">
+              ${['ru','en','uk','kz'].map(l => `<button style="padding:4px 8px; font-size:12px;" class="${state.language===l?'accent-btn':''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}
+            </div>
+          </div>
+          <div class="main-scroll" id="mainContent"></div>
+          <div class="bottom-nav">
+            <div class="nav-icon ${state.currentPage==='home'?'active':''}" data-page="home">🏠<span style="font-size:10px;">${t('home')}</span></div>
+            <div class="nav-icon ${state.currentPage==='projects'?'active':''}" data-page="projects">📁<span style="font-size:10px;">${t('projects')}</span></div>
+            <div class="nav-icon ${state.currentPage==='theories'?'active':''}" data-page="theories">🧠<span style="font-size:10px;">${t('theories')}</span></div>
+            <div class="nav-icon ${state.currentPage==='profile'?'active':''}" data-page="profile">👤<span style="font-size:10px;">${t('profile')}</span></div>
+          </div>
+        </div>
+      `;
+
+      document.querySelectorAll('[data-lang]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          state.language = e.target.dataset.lang;
+          localStorage.setItem('kdchd_lang', state.language);
+          render();
+        });
+      });
+
+      document.querySelectorAll('.nav-icon').forEach(icon => {
+        icon.addEventListener('click', (e) => {
+          state.currentPage = e.currentTarget.dataset.page;
+          render();
+        });
+      });
+
+      renderPageContent();
+    }
+
+    function renderPageContent() {
+      const main = document.getElementById('mainContent');
+      if (!main) return;
+      const page = state.currentPage;
+
+      if (!state.currentUser && page !== 'profile') {
+        main.innerHTML = renderAuth();
+        attachAuthEvents();
+        return;
+      }
+
+      switch(page) {
+        case 'home': main.innerHTML = renderHome(); attachHomeEvents(); break;
+        case 'projects': main.innerHTML = renderProjects(); break;
+        case 'theories': main.innerHTML = renderTheories(); break;
+        case 'profile': main.innerHTML = state.currentUser ? renderProfile() : renderAuth();
+                        if(!state.currentUser) attachAuthEvents(); else attachProfileEvents(); break;
+        default: main.innerHTML = renderHome();
+      }
+    }
+
+    function renderAuth() {
+      return `
+        <div class="glass-card" style="text-align:center;">
+          <h2 style="margin-bottom:16px;">🔮 KDCHD NETWORK</h2>
+          <p style="color:#9ca3af;">${t('earlyAccess')}</p>
+          <input id="loginUsername" placeholder="${t('username')}" />
+          <input id="loginPassword" type="password" placeholder="${t('password')}" />
+          <button id="loginBtn" class="accent-btn" style="width:100%; margin-top:12px;">${t('loginExp')}</button>
+          <button id="registerBtn" style="width:100%; margin-top:8px;">${t('register')}</button>
+          <p style="margin-top:12px; font-size:12px; color:#6b7280;">существующие: void_creator / 1234</p>
+        </div>
+      `;
+    }
+
+    function attachAuthEvents() {
+      document.getElementById('loginBtn')?.addEventListener('click', () => {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        if (username && password) {
+          let user = state.users.find(u => u.username === username);
+          if (!user) {
+            user = { id: Date.now(), username, avatar: "👽", banner: null, desc: "новый экспериментатор", status: "🌐 Создаю проект", strange: "🟢 Нормальный" };
+            state.users.push(user);
+          }
+          state.currentUser = user;
+          render();
+        }
+      });
+      document.getElementById('registerBtn')?.addEventListener('click', () => {
+        alert('Регистрация: ник + пароль (альфа)');
+      });
+    }
+
+    function renderHome() {
+      const postBtnText = state.experimentMode ? t('makeChaos') : t('createPost');
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span class="strange-level">${state.currentUser?.strange || '🟢'}</span>
+          <button id="toggleExperiment" class="${state.experimentMode ? 'accent-btn' : ''}">🌀 ${state.experimentMode ? 'ВЫКЛ ЭКСПЕРИМЕНТ' : 'РЕЖИМ ЭКСПЕРИМЕНТА'}</button>
+        </div>
+        <div class="glass-card">
+          <textarea id="newPostText" placeholder="${postBtnText}..." rows="2"></textarea>
+          <button id="submitPost" class="accent-btn" style="margin-top:8px;">${postBtnText}</button>
+        </div>
+        ${state.posts.map(p => {
+          const user = state.users.find(u => u.id === p.userId) || {};
+          return `<div class="glass-card">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+              <div style="width:32px;height:32px;border-radius:50%;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;">
+                ${user.avatar && user.avatar.startsWith('data:') ? `<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />` : user.avatar || '👤'}
+              </div>
+              <strong>${user.username || 'unknown'}</strong>
+              <span style="font-size:12px; color:#9ca3af;">${user.status || ''}</span>
+            </div>
+            <p>${p.text}</p>
+            <div style="display:flex; gap:10px; margin-top:12px; font-size:14px;">
+              <span>❤️ ${p.reactions.like}</span><span>🧠 ${p.reactions.brain}</span><span>🔥 ${p.reactions.fire}</span><span>😭 ${p.reactions.cry}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      `;
+    }
+
+    function attachHomeEvents() {
+      document.getElementById('toggleExperiment')?.addEventListener('click', () => {
+        state.experimentMode = !state.experimentMode;
+        render();
+      });
+      document.getElementById('submitPost')?.addEventListener('click', () => {
+        const text = document.getElementById('newPostText').value.trim();
+        if (text && state.currentUser) {
+          state.posts.unshift({ id: Date.now(), userId: state.currentUser.id, text, image: null, reactions: { like:0, brain:0, fire:0, cry:0 } });
+          render();
+        }
+      });
+    }
+
+    function renderProjects() {
+      return `
+        <div class="glass-card">
+          <h3>📁 ${t('projects')}</h3>
+          ${state.projects.map(p => `
+            <div style="margin:12px 0;">
+              <strong>${p.name}</strong> <span>${p.status}</span>
+              <div class="project-meter"><div class="meter-fill" style="width:${p.progress}%"></div></div>
+              <small>${p.lastUpdate}</small>
+            </div>
+          `).join('')}
+          <button class="accent-btn" onclick="alert('Создание проекта (альфа)')">+ Новый проект</button>
+        </div>
+      `;
+    }
+
+    function renderTheories() {
+      const randomTheory = randomTheories[Math.floor(Math.random() * randomTheories.length)];
+      return `
+        <div class="glass-card" style="text-align:center;">
+          <h3>🧠 ${t('randomTheory')}</h3>
+          <p style="font-size:18px; margin:16px 0;">“${randomTheory}”</p>
+          <button id="newTheoryBtn">🔄 Другая теория</button>
+        </div>
+      `;
+    }
+
+    function renderProfile() {
+      if (!state.currentUser) return '';
+      const user = state.currentUser;
+      const bannerBg = user.banner ? `url(${user.banner})` : 'linear-gradient(135deg, #1e293b, #0F1117)';
+      return `
+        <div class="glass-card" style="padding:0; overflow:hidden;">
+          <div class="profile-banner" style="background:${bannerBg}; background-size:cover; background-position:center;">
+            ${user.banner ? '<img src="' + user.banner + '" alt="banner" />' : ''}
+            <label for="bannerUpload" style="position:absolute; bottom:8px; right:12px; background:#000000aa; padding:4px 10px; border-radius:12px; font-size:11px; cursor:pointer; z-index:3;">${t('changeBanner')}</label>
+            <input type="file" id="bannerUpload" class="file-input-hidden" accept="image/*" />
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; padding:0 16px 16px;">
+            <label for="avatarUpload" class="avatar-upload">
+              ${user.avatar && user.avatar.startsWith('data:') ? `<img src="${user.avatar}" alt="avatar" />` : user.avatar || '👤'}
+              <input type="file" id="avatarUpload" class="file-input-hidden" accept="image/*" />
+            </label>
+            <p class="upload-hint">${t('changeAvatar')} • ${t('maxSize')}</p>
+            <h2 style="margin-top:8px;">${user.username}</h2>
+            <p style="color:#9ca3af;">${user.desc}</p>
+            <p>${user.status}</p>
+            <div class="strange-level" style="justify-content:center; margin:8px 0;">${user.strange}</div>
+            <button id="qrBtn" style="margin-top:8px;">📱 QR профиля</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachProfileEvents() {
+      // Загрузка аватара
+      document.getElementById('avatarUpload')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) {
+          alert('Файл слишком большой. Максимум 20 МБ.');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (state.currentUser) {
+            state.currentUser.avatar = ev.target.result;
+            const idx = state.users.findIndex(u => u.id === state.currentUser.id);
+            if (idx !== -1) state.users[idx].avatar = ev.target.result;
+            render();
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Загрузка баннера
+      document.getElementById('bannerUpload')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) {
+          alert('Файл слишком большой. Максимум 20 МБ.');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (state.currentUser) {
+            state.currentUser.banner = ev.target.result;
+            const idx = state.users.findIndex(u => u.id === state.currentUser.id);
+            if (idx !== -1) state.users[idx].banner = ev.target.result;
+            render();
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('qrBtn')?.addEventListener('click', () => {
+        alert('QR-код профиля (будет здесь)');
+      });
+    }
+
+    window.addEventListener('load', () => {
+      const savedLang = localStorage.getItem('kdchd_lang');
+      if (savedLang && i18n[savedLang]) state.language = savedLang;
+      render();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'newTheoryBtn') render();
+    });
+  </script>
+</body>
+</html>
