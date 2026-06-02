@@ -2016,55 +2016,226 @@ loadState();
 applyLang();
 if(state.currentUser && state.users.find(u=>u.id===state.currentUser)) {
   enterApp();
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+}
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyAHislTkcdNjkbygL4P2jDAVcpZl6JoYzs",
-    authDomain: "kdchd-network.firebaseapp.com",
-    projectId: "kdchd-network",
-    storageBucket: "kdchd-network.firebasestorage.app",
-    messagingSenderId: "736748019309",
-    appId: "1:736748019309:web:5a45a6886712b21ff72964",
-    measurementId: "G-XS5SB15QWH"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
+// Firebase подключится после загрузки страницы (модуль async)
+// и автоматически подтянет посты/проекты из Firestore
 </script>
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs } 
-  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "XXX",
-    authDomain: "XXX",
-    projectId: "XXX",
+<!-- ===== FIREBASE (один модуль, правильно) ===== -->
+<script type="module">
+import { initializeApp }         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAnalytics }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+import {
+  getFirestore, collection,
+  addDoc, getDocs, onSnapshot,
+  query, orderBy, serverTimestamp,
+  doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ── Твой конфиг ──────────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyAHislTkcdNjkbygL4P2jDAVcpZl6JoYzs",
+  authDomain:        "kdchd-network.firebaseapp.com",
+  projectId:         "kdchd-network",
+  storageBucket:     "kdchd-network.firebasestorage.app",
+  messagingSenderId: "736748019309",
+  appId:             "1:736748019309:web:5a45a6886712b21ff72964",
+  measurementId:     "G-XS5SB15QWH"
+};
+// ─────────────────────────────────────────────────────────
+
+const app       = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db        = getFirestore(app);
+const auth      = getAuth(app);
+
+// Делаем db/auth глобально доступными для остального кода
+window._fbDB   = db;
+window._fbAuth = auth;
+
+// ── Статус подключения в UI ───────────────────────────────
+function setFbStatus(ok) {
+  let dot = document.getElementById('fb-status-dot');
+  if(!dot) {
+    dot = document.createElement('span');
+    dot.id = 'fb-status-dot';
+    dot.title = ok ? 'Firebase подключён' : 'Офлайн — данные хранятся локально';
+    dot.style.cssText = `
+      display:inline-block; width:7px; height:7px; border-radius:50%;
+      margin-left:6px; vertical-align:middle;
+      background:${ok ? '#64ff96' : '#ff6464'};
+      box-shadow: 0 0 6px ${ok ? '#64ff96' : '#ff6464'};
+    `;
+    const sidebarAlpha = document.querySelector('.sidebar-alpha');
+    if(sidebarAlpha) sidebarAlpha.appendChild(dot);
+  } else {
+    dot.style.background = ok ? '#64ff96' : '#ff6464';
+    dot.style.boxShadow  = `0 0 6px ${ok ? '#64ff96' : '#ff6464'}`;
+    dot.title = ok ? 'Firebase подключён' : 'Офлайн — данные хранятся локально';
+  }
+}
+
+// ── Слушаем ленту в реальном времени ─────────────────────
+function subscribeToFeed() {
+  try {
+    const q = query(collection(db, 'posts'), orderBy('time', 'desc'));
+    onSnapshot(q, (snap) => {
+      if(snap.empty) return;
+      let changed = false;
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        const id = docSnap.id;
+        if(!state.posts.find(p => p.id === id)) {
+          state.posts.push({
+            id, author:d.author||'unknown', text:d.text||'',
+            tag:d.tag||'idea', time:d.time||Date.now(),
+            reactions:d.reactions||{like:0,brain:0,fire:0,what:0},
+            userReactions:d.userReactions||{},
+            image:d.image||null
+          });
+          changed = true;
+        }
+      });
+      if(changed) {
+        saveState();
+        if(typeof renderFeed === 'function') renderFeed();
+      }
+      setFbStatus(true);
+    }, (err) => {
+      console.warn('Firestore feed error:', err.message);
+      setFbStatus(false);
+    });
+  } catch(e) { setFbStatus(false); }
+}
+
+// ── Слушаем проекты в реальном времени ───────────────────
+function subscribeToProjects() {
+  try {
+    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
+    onSnapshot(q, (snap) => {
+      if(snap.empty) return;
+      let changed = false;
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        const id = docSnap.id;
+        if(!state.projects.find(p => p.id === id)) {
+          state.projects.push({
+            id, owner:d.owner||'unknown', icon:d.icon||'🎬',
+            name:d.name||'Проект', desc:d.desc||'',
+            status:d.status||'dev', progress:d.progress||0,
+            update:d.update||'', createdAt:d.createdAt||Date.now()
+          });
+          changed = true;
+        }
+      });
+      if(changed) {
+        saveState();
+        if(typeof renderProjects === 'function') renderProjects();
+      }
+    }, (err) => console.warn('Firestore projects error:', err.message));
+  } catch(e) {}
+}
+
+// ── Переопределяем createPost чтобы писать в Firestore ────
+const _origCreatePost = window.createPost;
+window.createPost = async function() {
+  const text = document.getElementById('post-text-input')?.value.trim();
+  const tag  = document.getElementById('post-tag-select')?.value || 'idea';
+  if(!text || !state.currentUser) return;
+  const cu = state.users.find(u => u.id === state.currentUser);
+  if(!cu) return;
+
+  const imgEl  = document.getElementById('img-preview');
+  const imgSrc = (imgEl && imgEl.style.display !== 'none') ? imgEl.src : null;
+
+  const postData = {
+    author: cu.id, text, tag,
+    time: Date.now(),
+    reactions: {like:0, brain:0, fire:0, what:0},
+    userReactions: {},
+    image: imgSrc || null
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);}
-    async function createPost(text) {
-    await addDoc(collection(db, "posts"), {
-      text: text,
-      time: Date.now()
-    });
-  }
-    async function loadPosts() {
-    const snapshot = await getDocs(collection(db, "posts"));
+  // Сначала показываем локально (быстрый UI)
+  const localId = 'p'+Date.now();
+  state.posts.push({id:localId, ...postData});
+  cu.weirdness = Math.min((cu.weirdness||1)+1, 5);
+  saveState();
+  if(document.getElementById('post-text-input')) document.getElementById('post-text-input').value = '';
+  if(imgEl) { imgEl.src=''; imgEl.style.display='none'; }
+  if(typeof renderFeed     === 'function') renderFeed();
+  if(typeof updateSidebarUser === 'function') updateSidebarUser();
+  if(typeof renderProfile  === 'function') renderProfile();
 
-    snapshot.forEach((doc) => {
-      console.log(doc.data());
+  // Потом пишем в Firestore
+  try {
+    await addDoc(collection(db, 'posts'), {
+      ...postData, time: serverTimestamp()
     });
+  } catch(e) {
+    console.warn('Firestore write error (post saved locally):', e.message);
   }
+};
+
+// ── Переопределяем addProject чтобы писать в Firestore ────
+const _origAddProject = window.addProject;
+window.addProject = async function() {
+  const cu = state.users.find(u => u.id === state.currentUser);
+  if(!cu) return;
+  const name    = document.getElementById('proj-name')?.value.trim();
+  const desc    = document.getElementById('proj-desc')?.value.trim();
+  const rawProg = parseInt(document.getElementById('proj-progress')?.value);
+  const progress = isNaN(rawProg) ? 0 : Math.max(0, Math.min(100, rawProg));
+  const status  = document.getElementById('proj-status')?.value || 'dev';
+  const update  = document.getElementById('proj-update')?.value.trim();
+  if(!name) {
+    const el = document.getElementById('proj-name');
+    if(el) { el.style.borderColor='rgba(255,100,100,0.5)'; setTimeout(()=>el.style.borderColor='',1500); }
+    return;
+  }
+  const projData = {
+    owner:cu.id, icon:state.selectedProjectIcon||'🎬',
+    name, desc:desc||'Загадочный проект', status, progress,
+    update:update||'Только начал', createdAt:Date.now()
+  };
+  const localId = 'pr'+Date.now();
+  state.projects.push({id:localId, ...projData});
+  saveState();
+  closeModal('modal-project');
+  ['proj-name','proj-desc','proj-update'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const pp = document.getElementById('proj-progress'); if(pp) pp.value='0';
+  if(typeof renderProjects === 'function') renderProjects();
+  if(typeof renderProfile  === 'function') renderProfile();
+  try {
+    await addDoc(collection(db, 'projects'), {
+      ...projData, createdAt: serverTimestamp()
+    });
+  } catch(e) {
+    console.warn('Firestore write error (project saved locally):', e.message);
+  }
+};
+
+// ── Запуск ────────────────────────────────────────────────
+// Небольшая задержка чтобы основной скрипт успел инициализироваться
+setTimeout(() => {
+  try {
+    subscribeToFeed();
+    subscribeToProjects();
+    setFbStatus(true);
+  } catch(e) {
+    setFbStatus(false);
+  }
+}, 300);
+
+// Экспортируем утилиты для будущих расширений
+window._fb = { db, auth, addDoc, getDocs, collection, serverTimestamp };
 </script>
 </body>
 </html>
