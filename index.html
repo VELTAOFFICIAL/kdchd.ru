@@ -2022,24 +2022,16 @@ if(state.currentUser && state.users.find(u=>u.id===state.currentUser)) {
 // и автоматически подтянет посты/проекты из Firestore
 </script>
 
-<!-- ===== FIREBASE (один модуль, правильно) ===== -->
+<!-- ===== FIREBASE ===== -->
 <script type="module">
-import { initializeApp }         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAnalytics }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+import { initializeApp }     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAnalytics }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import {
-  getFirestore, collection,
-  addDoc, getDocs, onSnapshot,
-  query, orderBy, serverTimestamp,
-  doc, updateDoc
+  getFirestore, collection, addDoc,
+  onSnapshot, query, orderBy,
+  serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// ── Твой конфиг ──────────────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyAHislTkcdNjkbygL4P2jDAVcpZl6JoYzs",
   authDomain:        "kdchd-network.firebaseapp.com",
@@ -2049,193 +2041,289 @@ const firebaseConfig = {
   appId:             "1:736748019309:web:5a45a6886712b21ff72964",
   measurementId:     "G-XS5SB15QWH"
 };
-// ─────────────────────────────────────────────────────────
 
-const app       = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db        = getFirestore(app);
-const auth      = getAuth(app);
+const fbApp = initializeApp(firebaseConfig);
+const analytics = getAnalytics(fbApp);
+const db = getFirestore(fbApp);
 
-// Делаем db/auth глобально доступными для остального кода
-window._fbDB   = db;
-window._fbAuth = auth;
+// ── Хелпер: Timestamp → миллисекунды ─────────────────────
+// serverTimestamp() при записи возвращает null до подтверждения сервером,
+// поэтому всегда используем числовое поле timeMs как основное
+function toMs(val) {
+  if(!val) return Date.now();
+  if(typeof val === 'number') return val;
+  if(val instanceof Timestamp) return val.toMillis();
+  if(val && typeof val.toMillis === 'function') return val.toMillis();
+  if(val && val.seconds) return val.seconds * 1000;
+  return Date.now();
+}
 
-// ── Статус подключения в UI ───────────────────────────────
-function setFbStatus(ok) {
+// ── Статус-точка в сайдбаре ───────────────────────────────
+function setFbStatus(ok, msg) {
   let dot = document.getElementById('fb-status-dot');
   if(!dot) {
     dot = document.createElement('span');
     dot.id = 'fb-status-dot';
-    dot.title = ok ? 'Firebase подключён' : 'Офлайн — данные хранятся локально';
-    dot.style.cssText = `
-      display:inline-block; width:7px; height:7px; border-radius:50%;
-      margin-left:6px; vertical-align:middle;
-      background:${ok ? '#64ff96' : '#ff6464'};
-      box-shadow: 0 0 6px ${ok ? '#64ff96' : '#ff6464'};
-    `;
-    const sidebarAlpha = document.querySelector('.sidebar-alpha');
-    if(sidebarAlpha) sidebarAlpha.appendChild(dot);
-  } else {
-    dot.style.background = ok ? '#64ff96' : '#ff6464';
-    dot.style.boxShadow  = `0 0 6px ${ok ? '#64ff96' : '#ff6464'}`;
-    dot.title = ok ? 'Firebase подключён' : 'Офлайн — данные хранятся локально';
-  }
-}
-
-// ── Слушаем ленту в реальном времени ─────────────────────
-function subscribeToFeed() {
-  try {
-    const q = query(collection(db, 'posts'), orderBy('time', 'desc'));
-    onSnapshot(q, (snap) => {
-      if(snap.empty) return;
-      let changed = false;
-      snap.forEach(docSnap => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-        if(!state.posts.find(p => p.id === id)) {
-          state.posts.push({
-            id, author:d.author||'unknown', text:d.text||'',
-            tag:d.tag||'idea', time:d.time||Date.now(),
-            reactions:d.reactions||{like:0,brain:0,fire:0,what:0},
-            userReactions:d.userReactions||{},
-            image:d.image||null
-          });
-          changed = true;
-        }
-      });
-      if(changed) {
-        saveState();
-        if(typeof renderFeed === 'function') renderFeed();
-      }
-      setFbStatus(true);
-    }, (err) => {
-      console.warn('Firestore feed error:', err.message);
-      setFbStatus(false);
+    Object.assign(dot.style, {
+      display:'inline-block', width:'7px', height:'7px',
+      borderRadius:'50%', marginLeft:'6px', verticalAlign:'middle',
+      transition:'background 0.4s, box-shadow 0.4s'
     });
-  } catch(e) { setFbStatus(false); }
+    document.querySelector('.sidebar-alpha')?.appendChild(dot);
+  }
+  const color = ok ? '#64ff96' : '#ff6464';
+  dot.style.background  = color;
+  dot.style.boxShadow   = `0 0 6px ${color}`;
+  dot.title = msg || (ok ? 'Firebase подключён' : 'Офлайн — данные локальны');
 }
 
-// ── Слушаем проекты в реальном времени ───────────────────
+// ── REALTIME: посты ───────────────────────────────────────
+// Слушаем ВСЕ изменения — не только добавление, но и обновления
+// Сортировка по timeMs (число) — не serverTimestamp чтобы избежать null-ошибок
+function subscribeToFeed() {
+  const q = query(
+    collection(db, 'posts'),
+    orderBy('timeMs', 'desc')   // числовое поле, не serverTimestamp
+  );
+
+  onSnapshot(q,
+    (snap) => {
+      // Полностью заменяем FB-посты в state (правда о данных — в Firestore)
+      const fbIds  = new Set();
+      const newFbPosts = [];
+
+      snap.forEach(docSnap => {
+        const d  = docSnap.data();
+        const id = docSnap.id;
+        fbIds.add(id);
+        newFbPosts.push({
+          id,
+          author:        d.author        || 'unknown',
+          authorNick:    d.authorNick    || '',
+          authorAvatar:  d.authorAvatar  || '👾',
+          text:          d.text          || '',
+          tag:           d.tag           || 'idea',
+          timeMs:        toMs(d.timeMs),
+          time:          toMs(d.timeMs),   // обратная совместимость
+          reactions:     d.reactions     || {like:0,brain:0,fire:0,what:0},
+          userReactions: d.userReactions || {},
+          image:         d.image         || null,
+        });
+      });
+
+      // Оставляем только локальные (не-FB) посты + все FB-посты
+      const localOnly = state.posts.filter(p => !p.id.startsWith('fb_') && !fbIds.has(p.id));
+      state.posts = [...newFbPosts, ...localOnly];
+
+      saveState();
+      if(typeof renderFeed === 'function') renderFeed();
+      setFbStatus(true, `Firebase: ${newFbPosts.length} постов`);
+    },
+    (err) => {
+      console.error('[FB] posts onSnapshot error:', err.code, err.message);
+      // Частая причина: нет индекса — создаём без orderBy как fallback
+      if(err.code === 'failed-precondition' || err.code === 'unimplemented') {
+        subscribeFeedNoOrder();
+      } else {
+        setFbStatus(false, 'Ошибка: ' + err.message);
+      }
+    }
+  );
+}
+
+// Fallback без сортировки (если нет индекса на timeMs)
+function subscribeFeedNoOrder() {
+  onSnapshot(collection(db, 'posts'),
+    (snap) => {
+      const newFbPosts = [];
+      snap.forEach(docSnap => {
+        const d  = docSnap.data();
+        newFbPosts.push({
+          id:            docSnap.id,
+          author:        d.author        || 'unknown',
+          authorNick:    d.authorNick    || '',
+          authorAvatar:  d.authorAvatar  || '👾',
+          text:          d.text          || '',
+          tag:           d.tag           || 'idea',
+          timeMs:        toMs(d.timeMs),
+          time:          toMs(d.timeMs),
+          reactions:     d.reactions     || {like:0,brain:0,fire:0,what:0},
+          userReactions: d.userReactions || {},
+          image:         d.image         || null,
+        });
+      });
+      // Сортируем на клиенте по timeMs убыванию
+      newFbPosts.sort((a,b) => b.timeMs - a.timeMs);
+      const fbIds   = new Set(newFbPosts.map(p => p.id));
+      const localOnly = state.posts.filter(p => !fbIds.has(p.id));
+      state.posts = [...newFbPosts, ...localOnly];
+      saveState();
+      if(typeof renderFeed === 'function') renderFeed();
+      setFbStatus(true, `Firebase (без индекса): ${newFbPosts.length} постов`);
+    },
+    (err) => {
+      console.error('[FB] posts fallback error:', err.code, err.message);
+      setFbStatus(false, 'Ошибка Firestore: ' + err.code);
+    }
+  );
+}
+
+// ── REALTIME: проекты ─────────────────────────────────────
 function subscribeToProjects() {
-  try {
-    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
-    onSnapshot(q, (snap) => {
-      if(snap.empty) return;
-      let changed = false;
+  onSnapshot(collection(db, 'projects'),
+    (snap) => {
+      const newFbProjs = [];
+      const fbIds = new Set();
       snap.forEach(docSnap => {
         const d = docSnap.data();
-        const id = docSnap.id;
-        if(!state.projects.find(p => p.id === id)) {
-          state.projects.push({
-            id, owner:d.owner||'unknown', icon:d.icon||'🎬',
-            name:d.name||'Проект', desc:d.desc||'',
-            status:d.status||'dev', progress:d.progress||0,
-            update:d.update||'', createdAt:d.createdAt||Date.now()
-          });
-          changed = true;
-        }
+        fbIds.add(docSnap.id);
+        newFbProjs.push({
+          id:       docSnap.id,
+          owner:    d.owner    || 'unknown',
+          icon:     d.icon     || '🎬',
+          name:     d.name     || 'Проект',
+          desc:     d.desc     || '',
+          status:   d.status   || 'dev',
+          progress: d.progress || 0,
+          update:   d.update   || '',
+          createdAt:toMs(d.createdAt),
+        });
       });
-      if(changed) {
-        saveState();
-        if(typeof renderProjects === 'function') renderProjects();
-      }
-    }, (err) => console.warn('Firestore projects error:', err.message));
-  } catch(e) {}
+      newFbProjs.sort((a,b) => b.createdAt - a.createdAt);
+      const localOnly = state.projects.filter(p => !fbIds.has(p.id));
+      state.projects = [...newFbProjs, ...localOnly];
+      saveState();
+      if(typeof renderProjects === 'function') renderProjects();
+    },
+    (err) => console.error('[FB] projects error:', err.code, err.message)
+  );
 }
 
-// ── Переопределяем createPost чтобы писать в Firestore ────
-const _origCreatePost = window.createPost;
+// ── WRITE: создать пост ───────────────────────────────────
+// Переопределяем глобальную функцию
 window.createPost = async function() {
-  const text = document.getElementById('post-text-input')?.value.trim();
-  const tag  = document.getElementById('post-tag-select')?.value || 'idea';
-  if(!text || !state.currentUser) return;
+  const textEl = document.getElementById('post-text-input');
+  const text   = textEl?.value.trim();
+  const tag    = document.getElementById('post-tag-select')?.value || 'idea';
+  if(!text) return;
+
   const cu = state.users.find(u => u.id === state.currentUser);
   if(!cu) return;
 
   const imgEl  = document.getElementById('img-preview');
-  const imgSrc = (imgEl && imgEl.style.display !== 'none') ? imgEl.src : null;
+  const imgSrc = (imgEl && imgEl.style.display !== 'none' && imgEl.src) ? imgEl.src : null;
+  const nowMs  = Date.now();
 
-  const postData = {
-    author: cu.id, text, tag,
-    time: Date.now(),
-    reactions: {like:0, brain:0, fire:0, what:0},
-    userReactions: {},
-    image: imgSrc || null
+  // 1. Сразу показываем локально (моментальный UI)
+  const localId = 'local_' + nowMs;
+  const localPost = {
+    id: localId, author: cu.id,
+    authorNick: cu.nick, authorAvatar: cu.avatar,
+    text, tag, timeMs: nowMs, time: nowMs,
+    reactions: {like:0,brain:0,fire:0,what:0},
+    userReactions: {}, image: imgSrc
   };
-
-  // Сначала показываем локально (быстрый UI)
-  const localId = 'p'+Date.now();
-  state.posts.push({id:localId, ...postData});
+  state.posts.unshift(localPost);
   cu.weirdness = Math.min((cu.weirdness||1)+1, 5);
   saveState();
-  if(document.getElementById('post-text-input')) document.getElementById('post-text-input').value = '';
-  if(imgEl) { imgEl.src=''; imgEl.style.display='none'; }
-  if(typeof renderFeed     === 'function') renderFeed();
-  if(typeof updateSidebarUser === 'function') updateSidebarUser();
-  if(typeof renderProfile  === 'function') renderProfile();
 
-  // Потом пишем в Firestore
+  textEl.value = '';
+  if(imgEl) { imgEl.src=''; imgEl.style.display='none'; }
+  const fileInput = document.getElementById('img-file-input');
+  if(fileInput) fileInput.value='';
+
+  if(typeof renderFeed        === 'function') renderFeed();
+  if(typeof updateSidebarUser === 'function') updateSidebarUser();
+  if(typeof renderProfile     === 'function') renderProfile();
+
+  // 2. Пишем в Firestore — используем timeMs (число) для надёжной сортировки
   try {
-    await addDoc(collection(db, 'posts'), {
-      ...postData, time: serverTimestamp()
+    const docRef = await addDoc(collection(db, 'posts'), {
+      author:       cu.id,
+      authorNick:   cu.nick,
+      authorAvatar: cu.avatar,
+      text, tag,
+      timeMs:       nowMs,          // число — основное поле сортировки
+      createdAt:    serverTimestamp(), // серверная метка — только для аудита
+      reactions:    {like:0,brain:0,fire:0,what:0},
+      userReactions:{},
+      image:        imgSrc || null,
     });
+
+    // Заменяем локальный ID на реальный Firestore ID
+    const idx = state.posts.findIndex(p => p.id === localId);
+    if(idx !== -1) state.posts[idx].id = docRef.id;
+    saveState();
+    console.log('[FB] пост записан:', docRef.id);
+
   } catch(e) {
-    console.warn('Firestore write error (post saved locally):', e.message);
+    console.error('[FB] ошибка записи поста:', e.code, e.message);
+    // Пост остаётся локально — не теряется
   }
 };
 
-// ── Переопределяем addProject чтобы писать в Firestore ────
-const _origAddProject = window.addProject;
+// ── WRITE: создать проект ─────────────────────────────────
 window.addProject = async function() {
   const cu = state.users.find(u => u.id === state.currentUser);
   if(!cu) return;
-  const name    = document.getElementById('proj-name')?.value.trim();
-  const desc    = document.getElementById('proj-desc')?.value.trim();
-  const rawProg = parseInt(document.getElementById('proj-progress')?.value);
-  const progress = isNaN(rawProg) ? 0 : Math.max(0, Math.min(100, rawProg));
-  const status  = document.getElementById('proj-status')?.value || 'dev';
-  const update  = document.getElementById('proj-update')?.value.trim();
+
+  const nameEl = document.getElementById('proj-name');
+  const name   = nameEl?.value.trim();
   if(!name) {
-    const el = document.getElementById('proj-name');
-    if(el) { el.style.borderColor='rgba(255,100,100,0.5)'; setTimeout(()=>el.style.borderColor='',1500); }
+    if(nameEl) { nameEl.style.borderColor='rgba(255,100,100,0.5)'; setTimeout(()=>nameEl.style.borderColor='',1500); }
     return;
   }
+
+  const desc     = document.getElementById('proj-desc')?.value.trim()    || 'Загадочный проект';
+  const rawProg  = parseInt(document.getElementById('proj-progress')?.value);
+  const progress = isNaN(rawProg) ? 0 : Math.max(0, Math.min(100, rawProg));
+  const status   = document.getElementById('proj-status')?.value          || 'dev';
+  const update   = document.getElementById('proj-update')?.value.trim()   || 'Только начал';
+  const nowMs    = Date.now();
+
   const projData = {
     owner:cu.id, icon:state.selectedProjectIcon||'🎬',
-    name, desc:desc||'Загадочный проект', status, progress,
-    update:update||'Только начал', createdAt:Date.now()
+    name, desc, status, progress, update, createdAt:nowMs
   };
-  const localId = 'pr'+Date.now();
-  state.projects.push({id:localId, ...projData});
+
+  // Локально сразу
+  const localId = 'local_pr_' + nowMs;
+  state.projects.unshift({id:localId, ...projData});
   saveState();
   closeModal('modal-project');
-  ['proj-name','proj-desc','proj-update'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['proj-name','proj-desc','proj-update'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
   const pp = document.getElementById('proj-progress'); if(pp) pp.value='0';
   if(typeof renderProjects === 'function') renderProjects();
   if(typeof renderProfile  === 'function') renderProfile();
+
+  // Потом в Firestore
   try {
-    await addDoc(collection(db, 'projects'), {
+    const docRef = await addDoc(collection(db, 'projects'), {
       ...projData, createdAt: serverTimestamp()
     });
+    const idx = state.projects.findIndex(p => p.id === localId);
+    if(idx !== -1) state.projects[idx].id = docRef.id;
+    saveState();
+    console.log('[FB] проект записан:', docRef.id);
   } catch(e) {
-    console.warn('Firestore write error (project saved locally):', e.message);
+    console.error('[FB] ошибка записи проекта:', e.code, e.message);
   }
 };
 
 // ── Запуск ────────────────────────────────────────────────
-// Небольшая задержка чтобы основной скрипт успел инициализироваться
-setTimeout(() => {
-  try {
-    subscribeToFeed();
-    subscribeToProjects();
-    setFbStatus(true);
-  } catch(e) {
-    setFbStatus(false);
-  }
-}, 300);
+setFbStatus(false, 'Подключение...');
+try {
+  subscribeToFeed();
+  subscribeToProjects();
+} catch(e) {
+  console.error('[FB] init error:', e);
+  setFbStatus(false, 'Ошибка инициализации');
+}
 
-// Экспортируем утилиты для будущих расширений
-window._fb = { db, auth, addDoc, getDocs, collection, serverTimestamp };
+window._fb = { db, addDoc, collection, serverTimestamp };
+console.log('[FB] Firebase модуль запущен ✓');
 </script>
 </body>
 </html>
