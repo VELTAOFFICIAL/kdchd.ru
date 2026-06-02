@@ -584,7 +584,43 @@
     });
 
     document.addEventListener('click', (e) => {
-      if (e.target.id === 'newTheoryBtn') render();
+      if (e.target.id === 'newTheoryBtn') render();// Сохранение в LocalStorage при авторизации
+function loginUser(user) {
+  state.currentUser = user;
+  localStorage.setItem('kdchd_user', JSON.stringify(user));
+  render();
+}
+
+// Загрузка из LocalStorage при старте
+function loadFromStorage() {
+  const savedUser = localStorage.getItem('kdchd_user');
+  if (savedUser) {
+    state.currentUser = JSON.parse(savedUser);
+  }
+  
+  const savedLang = localStorage.getItem('kdchd_lang');
+  if (savedLang) {
+    state.language = savedLang;
+  }
+}
+
+// Выход из аккаунта
+function logout() {
+  state.currentUser = null;
+  localStorage.removeItem('kdchd_user');
+  render();
+}
+
+// Вызов при загрузке страницы
+window.addEventListener('load', () => {
+  loadFromStorage();
+  render();
+// Было:
+state.currentUser = user;
+render();
+
+// Стало:
+loginUser(user);});
     });
   </script>
 </body>
