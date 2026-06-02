@@ -1593,26 +1593,46 @@ const reactionDefs = [
   {key:'what',emoji:'😭',label:{ru:'Что это вообще',en:'What is this',uk:'Що це таке',kz:'Бұл не'}},
 ];
 
-function timeAgo(ts) {
-  const d = Date.now()-ts;
-  if(d<60000) return 'только что';
-  if(d<3600000) return Math.floor(d/60000)+' мин';
-  if(d<86400000) return Math.floor(d/3600000)+' ч';
-  return Math.floor(d/86400000)+' дн';
+function timeAgo(post) {
+  // Берём timeMs (число) — оно всегда есть. post.time может быть Timestamp-объектом из Firestore.
+  const ms = post.timeMs || (typeof post.time === 'number' ? post.time : null);
+  if(!ms || ms < 1000000000000) return 'только что'; // защита от мусора
+  const d = Date.now() - ms;
+  if(d < 0)        return 'только что';
+  if(d < 60000)    return 'только что';
+  if(d < 3600000)  return Math.floor(d/60000) + ' мин';
+  if(d < 86400000) return Math.floor(d/3600000) + ' ч';
+  return Math.floor(d/86400000) + ' дн';
+}
+
+function resolvePostAuthor(post) {
+  // Сначала ищем в локальных пользователях
+  const local = state.users.find(u => u.id === post.author);
+  if(local) return { nick: local.nick, avatar: local.avatar };
+  // Если нет — берём данные прямо из поста (записаны Firebase-модулем при создании)
+  return {
+    nick:   post.authorNick   || post.author || 'unknown',
+    avatar: post.authorAvatar || '👾'
+  };
 }
 
 function renderFeed() {
   const list = document.getElementById('feed-list');
   if(!list) return;
-  const sorted = [...state.posts].reverse();
+  // Сортируем по timeMs убыванию (новые сверху)
+  const sorted = [...state.posts].sort((a,b) => {
+    const at = a.timeMs || a.time || 0;
+    const bt = b.timeMs || b.time || 0;
+    return bt - at;
+  });
   if(!sorted.length) {
     list.innerHTML=`<div class="empty-state"><div class="e-emoji">🌌</div><div class="e-title">Лента пуста</div><div>Стань первым — создай пост</div></div>`;
     return;
   }
+  const cu = getCurrentUser();
   list.innerHTML = sorted.map(post => {
-    const user = state.users.find(u=>u.id===post.author)||{nick:'unknown',avatar:'👾'};
+    const author = resolvePostAuthor(post);
     const tag = tagBadges[post.tag]||tagBadges.idea;
-    const cu = getCurrentUser();
     const ur = post.userReactions||{};
     const imgHtml = post.image ? `<img src="${post.image}" class="post-img" alt="">` : '';
     const reactHtml = reactionDefs.map(r=>{
@@ -1625,10 +1645,10 @@ function renderFeed() {
     }).join('');
     return `<div class="post-card">
       <div class="post-header">
-        <div class="post-ava">${avatarHtml(user.avatar,28)}</div>
+        <div class="post-ava">${avatarHtml(author.avatar,28)}</div>
         <div class="post-meta">
-          <div class="post-author">@${user.nick}</div>
-          <div class="post-time">${timeAgo(post.time)}</div>
+          <div class="post-author">@${escHtml(author.nick)}</div>
+          <div class="post-time">${timeAgo(post)}</div>
         </div>
         <span class="post-badge ${tag.cl}">${tag.emoji} ${tag.label[currentLang]||tag.label.ru}</span>
       </div>
@@ -1922,7 +1942,7 @@ function renderProfile() {
         return `<div class="post-card">
           <div class="post-header">
             <div class="post-ava">${avatarHtml(cu.avatar,28)}</div>
-            <div class="post-meta"><div class="post-author">@${cu.nick}</div><div class="post-time">${timeAgo(post.time)}</div></div>
+            <div class="post-meta"><div class="post-author">@${cu.nick}</div><div class="post-time">${timeAgo(post)}</div></div>
             <span class="post-badge ${tag.cl}">${tag.emoji} ${tag.label[currentLang]||tag.label.ru}</span>
           </div>
           <div class="post-text">${escHtml(post.text)}</div>
