@@ -6,33 +6,71 @@
 <title>KDCHD NETWORK — КД ЧД</title>
 <style>
   :root {
-    --bg: #0F1117;
-    --bg2: #161B22;
-    --bg3: #1C2333;
-    --accent: #58A6FF;
-    --accent2: #79C0FF;
-    --glow: rgba(88,166,255,0.15);
-    --glowS: rgba(88,166,255,0.08);
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(88,166,255,0.25);
-    --text: #E6EDF3;
-    --text2: #8B949E;
-    --text3: #6E7681;
-    --card: rgba(22,27,34,0.9);
+    --bg: #0d1a2e;
+    --bg2: #0f2040;
+    --bg3: #142855;
+    --accent: #FFB830;
+    --accent2: #FF8C42;
+    --glow: rgba(255,184,48,0.20);
+    --glowS: rgba(255,184,48,0.10);
+    --border: rgba(255,255,255,0.09);
+    --border2: rgba(255,184,48,0.30);
+    --text: #F0EAD6;
+    --text2: #A8B8CC;
+    --text3: #6E8099;
+    --card: rgba(10,24,48,0.82);
     --radius: 12px;
     --radius-sm: 8px;
+    /* summer extras */
+    --sun: #FFD700;
+    --wave: #0B6FA0;
+    --wave2: #0E89C4;
+    --sand: rgba(255,200,100,0.07);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
+    background: #071525;
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
   }
+
+  /* ===== LIVE SUMMER CANVAS BG ===== */
+  #summer-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Everything above canvas */
+  #summer-emojis, #screen-auth, #screen-app {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Frosted sidebar / cards over the canvas */
+  .sidebar {
+    background: rgba(7, 21, 40, 0.82) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+  .topbar {
+    background: rgba(7, 21, 40, 0.80) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+  .auth-bg, .auth-grid { display: none; }
+  .auth-box {
+    background: rgba(7,21,40,0.88) !important;
+    backdrop-filter: blur(24px) !important;
+    border-color: rgba(255,184,48,0.2) !important;
+    box-shadow: 0 0 60px rgba(255,184,48,0.10), 0 0 120px rgba(0,0,0,0.6) !important;
+  }
   /* === ANIMATIONS === */
   @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes glowPulse { 0%,100% { box-shadow: 0 0 20px var(--glow); } 50% { box-shadow: 0 0 40px rgba(88,166,255,0.3); } }
+  @keyframes glowPulse { 0%,100% { box-shadow: 0 0 20px rgba(255,184,48,0.12); } 50% { box-shadow: 0 0 40px rgba(255,184,48,0.25); } }
   @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
   @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   @keyframes glitch1 { 0%,100%{clip-path:inset(0 0 100% 0)} 5%{clip-path:inset(33% 0 55% 0)} 15%{clip-path:inset(10% 0 80% 0)} 20%{clip-path:inset(0 0 100% 0)} }
@@ -98,8 +136,8 @@
   }
 
   /* Warm accent glow on cards in summer */
-  .post-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,196,0,0.04); }
-  .auth-box { box-shadow: 0 0 60px rgba(88,166,255,0.08), 0 0 120px rgba(0,0,0,0.5), 0 0 200px rgba(255,196,0,0.03); }
+  .post-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,184,48,0.08); }
+  .auth-box { box-shadow: 0 0 60px rgba(255,184,48,0.08), 0 0 120px rgba(0,0,0,0.5); }
 
   /* ===== ANTISPAM TOAST ===== */
   .spam-toast {
@@ -955,6 +993,9 @@
 </style>
 </head>
 <body>
+
+<!-- ===== ЖИВОЙ ЛЕТНИЙ ФОН ===== -->
+<canvas id="summer-canvas"></canvas>
 
 <!-- ===== ЛЕТНИЕ ЭМОДЗИ (фон) ===== -->
 <div id="summer-emojis" aria-hidden="true"></div>
@@ -2645,5 +2686,260 @@ subscribeToProjects();
 window._fb = { db, serverTimestamp };
 console.log('[KDCHD] Firebase v0.2 ✓');
 </script>
+<script>
+// ================================================================
+//  LIVE SUMMER BACKGROUND — canvas renderer
+//  Sky gradient → sun → clouds → sea waves → foam particles
+// ================================================================
+(function() {
+  const canvas = document.getElementById('summer-canvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, t = 0;
+
+  // ── Resize ──────────────────────────────────────────────────
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ── Clouds ──────────────────────────────────────────────────
+  const clouds = Array.from({length: 7}, (_, i) => ({
+    x:  (W / 7) * i + Math.random() * 120,
+    y:  30 + Math.random() * 120,
+    r:  55 + Math.random() * 60,
+    spd: 0.12 + Math.random() * 0.18,
+    op:  0.18 + Math.random() * 0.22,
+  }));
+
+  function drawCloud(cx, cy, r, op) {
+    ctx.save();
+    ctx.globalAlpha = op;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.6);
+    g.addColorStop(0,   'rgba(255,240,200,0.95)');
+    g.addColorStop(0.5, 'rgba(255,255,255,0.7)');
+    g.addColorStop(1,   'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx,        cy,       r,        0, Math.PI*2);
+    ctx.arc(cx - r*.7, cy + r*.2, r * .75, 0, Math.PI*2);
+    ctx.arc(cx + r*.7, cy + r*.3, r * .65, 0, Math.PI*2);
+    ctx.arc(cx + r*.3, cy - r*.3, r * .55, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Stars (visible in deep-blue sky area) ───────────────────
+  const stars = Array.from({length: 60}, () => ({
+    x: Math.random(), y: Math.random() * 0.35,
+    s: 0.5 + Math.random() * 1.5,
+    ph: Math.random() * Math.PI * 2,
+  }));
+
+  // ── Wave layers ─────────────────────────────────────────────
+  function waveY(x, layer, time) {
+    const cfg = [
+      { amp: 22, freq: 0.010, spd: 0.6  },
+      { amp: 14, freq: 0.017, spd: 0.9  },
+      { amp:  9, freq: 0.028, spd: 1.3  },
+      { amp:  5, freq: 0.042, spd: 1.9  },
+    ];
+    const c = cfg[layer];
+    return Math.sin(x * c.freq + time * c.spd) * c.amp
+         + Math.sin(x * c.freq * 1.7 + time * c.spd * 0.7) * c.amp * 0.4;
+  }
+
+  // ── Foam particles ───────────────────────────────────────────
+  const foams = Array.from({length: 40}, () => ({
+    x: Math.random(),
+    phase: Math.random() * Math.PI * 2,
+    layer: Math.floor(Math.random() * 4),
+    size: 1.5 + Math.random() * 3,
+    life: Math.random(),
+    spd: 0.003 + Math.random() * 0.004,
+  }));
+
+  // ── Sun rays (slow spin) ─────────────────────────────────────
+  function drawSun(cx, cy, time) {
+    const R = Math.min(W, H) * 0.065;
+    // glow
+    const glo = ctx.createRadialGradient(cx, cy, R*0.5, cx, cy, R*3.5);
+    glo.addColorStop(0,   'rgba(255,220,60,0.28)');
+    glo.addColorStop(0.5, 'rgba(255,160,20,0.10)');
+    glo.addColorStop(1,   'rgba(255,100, 0,0)');
+    ctx.save();
+    ctx.fillStyle = glo;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*3.5, 0, Math.PI*2);
+    ctx.fill();
+
+    // rays
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(time * 0.08);
+    ctx.globalAlpha = 0.22;
+    for (let i = 0; i < 12; i++) {
+      ctx.rotate(Math.PI / 6);
+      ctx.beginPath();
+      ctx.moveTo(R * 1.15, -3);
+      ctx.lineTo(R * 2.8,  -8);
+      ctx.lineTo(R * 2.8,   8);
+      ctx.lineTo(R * 1.15,  3);
+      ctx.closePath();
+      const rg = ctx.createLinearGradient(R*1.1, 0, R*2.8, 0);
+      rg.addColorStop(0,   'rgba(255,220,80,0.9)');
+      rg.addColorStop(1,   'rgba(255,180,0,0)');
+      ctx.fillStyle = rg;
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // disc
+    const disc = ctx.createRadialGradient(cx - R*.25, cy - R*.25, 0, cx, cy, R);
+    disc.addColorStop(0,   '#FFFDE7');
+    disc.addColorStop(0.4, '#FFD740');
+    disc.addColorStop(1,   '#FF8F00');
+    ctx.fillStyle = disc;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Main render loop ─────────────────────────────────────────
+  function render() {
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
+
+    // 1) Sky gradient — dusk-to-midday
+    const skyH = H * 0.60;
+    const sky = ctx.createLinearGradient(0, 0, 0, skyH);
+    sky.addColorStop(0,    '#071525');   // deep night blue (top)
+    sky.addColorStop(0.25, '#0B2D55');
+    sky.addColorStop(0.55, '#1A5A8A');
+    sky.addColorStop(0.78, '#3B8FBF');
+    sky.addColorStop(1,    '#7EC8DA');   // horizon
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, skyH);
+
+    // 2) Stars
+    stars.forEach(s => {
+      const alpha = (0.4 + 0.3 * Math.sin(t * 1.2 + s.ph)) * (1 - s.y / 0.35);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle   = '#fff';
+      ctx.beginPath();
+      ctx.arc(s.x * W, s.y * H, s.s, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // 3) Sun
+    const sunX = W * 0.72;
+    const sunY = H * 0.14;
+    drawSun(sunX, sunY, t);
+
+    // 4) Clouds
+    clouds.forEach(c => {
+      c.x += c.spd;
+      if (c.x - c.r * 2.5 > W) c.x = -c.r * 2.5;
+      drawCloud(c.x, c.y, c.r, c.op);
+    });
+
+    // 5) Horizon glow
+    const hg = ctx.createLinearGradient(0, skyH - 60, 0, skyH + 40);
+    hg.addColorStop(0, 'rgba(255,180,50,0.0)');
+    hg.addColorStop(0.4, 'rgba(255,160,30,0.22)');
+    hg.addColorStop(1, 'rgba(255,120,0,0.0)');
+    ctx.fillStyle = hg;
+    ctx.fillRect(0, skyH - 60, W, 100);
+
+    // 6) Sea background
+    const seaGrad = ctx.createLinearGradient(0, skyH, 0, H);
+    seaGrad.addColorStop(0,    '#1A8BB5');
+    seaGrad.addColorStop(0.25, '#117AAA');
+    seaGrad.addColorStop(0.6,  '#0A5A88');
+    seaGrad.addColorStop(1,    '#063D60');
+    ctx.fillStyle = seaGrad;
+    ctx.fillRect(0, skyH, W, H - skyH);
+
+    // 7) Sea shimmer strip (sun reflection)
+    const shimX = sunX;
+    const shimG = ctx.createRadialGradient(shimX, skyH, 0, shimX, skyH + (H-skyH)*0.5, W*0.45);
+    shimG.addColorStop(0,   'rgba(255,220,80,0.20)');
+    shimG.addColorStop(0.5, 'rgba(255,200,60,0.07)');
+    shimG.addColorStop(1,   'rgba(255,200,60,0.00)');
+    ctx.fillStyle = shimG;
+    ctx.fillRect(0, skyH, W, H - skyH);
+
+    // 8) Waves (4 layers, back to front)
+    const waveStartY = skyH;
+    const waveColors = [
+      ['rgba(30,130,180,0.50)', 'rgba(25,115,165,0.30)'],
+      ['rgba(20,110,165,0.60)', 'rgba(15, 95,150,0.40)'],
+      ['rgba(15, 90,155,0.75)', 'rgba(10, 80,140,0.50)'],
+      ['rgba(10, 75,140,0.88)', 'rgba( 7, 65,120,0.65)'],
+    ];
+
+    for (let layer = 0; layer < 4; layer++) {
+      const yBase = waveStartY + (H - waveStartY) * (layer / 4) * 0.9;
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      ctx.lineTo(0, yBase + waveY(0, layer, t));
+      for (let x = 0; x <= W; x += 4) {
+        ctx.lineTo(x, yBase + waveY(x, layer, t));
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      const wg = ctx.createLinearGradient(0, yBase - 20, 0, yBase + 40);
+      wg.addColorStop(0, waveColors[layer][0]);
+      wg.addColorStop(1, waveColors[layer][1]);
+      ctx.fillStyle = wg;
+      ctx.fill();
+
+      // Wave crest white line
+      ctx.beginPath();
+      ctx.moveTo(0, yBase + waveY(0, layer, t));
+      for (let x = 0; x <= W; x += 4) {
+        ctx.lineTo(x, yBase + waveY(x, layer, t));
+      }
+      ctx.strokeStyle = `rgba(255,255,255,${0.06 + layer * 0.03})`;
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+    }
+
+    // 9) Foam particles
+    foams.forEach(f => {
+      f.life += f.spd;
+      if (f.life > 1) { f.life = 0; f.x = Math.random(); }
+      const layer = f.layer;
+      const yBase = waveStartY + (H - waveStartY) * (layer / 4) * 0.9;
+      const fx    = f.x * W + Math.sin(t * 0.9 + f.phase) * 18;
+      const fy    = yBase + waveY(fx, layer, t) - 2;
+      const alpha = Math.sin(f.life * Math.PI) * 0.55;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle   = '#fff';
+      ctx.beginPath();
+      ctx.arc(fx, fy, f.size, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // 10) Bottom fade (darken base so UI reads well)
+    const btm = ctx.createLinearGradient(0, H * 0.45, 0, H);
+    btm.addColorStop(0, 'rgba(4,15,30,0)');
+    btm.addColorStop(1, 'rgba(4,15,30,0.55)');
+    ctx.fillStyle = btm;
+    ctx.fillRect(0, H * 0.45, W, H);
+
+    requestAnimationFrame(render);
+  }
+
+  render();
+})();
+</script>
+
 </body>
 </html>
