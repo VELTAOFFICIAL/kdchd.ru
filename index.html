@@ -40,6 +40,110 @@
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
 
+  /* ===== SUMMER THEME v0.2 ===== */
+  @keyframes sunRise { 0%{transform:translateY(4px) scale(0.95);opacity:0.7} 100%{transform:translateY(0) scale(1);opacity:1} }
+  @keyframes sunPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,196,0,0.15)} 50%{box-shadow:0 0 24px 8px rgba(255,196,0,0.12)} }
+  @keyframes waveFloat { 0%,100%{transform:translateX(0)} 50%{transform:translateX(-8px)} }
+  @keyframes toastIn { 0%{opacity:0;transform:translateY(16px) scale(0.96)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes toastOut { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-8px)} }
+
+  /* ===== FLOATING SUMMER EMOJIS ===== */
+  @keyframes emojiFloat {
+    0%   { transform: translateY(100vh) rotate(0deg);   opacity: 0; }
+    5%   { opacity: 0.7; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-120px) rotate(360deg); opacity: 0; }
+  }
+  @keyframes emojiSway {
+    0%,100% { margin-left: 0; }
+    25%     { margin-left: 30px; }
+    75%     { margin-left: -30px; }
+  }
+
+  #summer-emojis {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .emoji-particle {
+    position: absolute;
+    bottom: -60px;
+    font-size: 22px;
+    animation: emojiFloat linear infinite, emojiSway ease-in-out infinite;
+    will-change: transform;
+    user-select: none;
+  }
+
+  /* Subtle warm tint on top of existing dark theme */
+  body::after {
+    content:'';
+    position:fixed; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, transparent, rgba(255,196,0,0.25), rgba(255,140,50,0.2), transparent);
+    pointer-events:none; z-index:9999;
+  }
+
+  /* Sun widget in sidebar */
+  .summer-sun {
+    display:flex; align-items:center; gap:8px;
+    padding: 10px 16px 6px;
+    font-size:11px; color: rgba(255,196,0,0.6);
+    letter-spacing:0.08em;
+  }
+  .sun-icon {
+    font-size:16px;
+    animation: sunRise 1s ease forwards, sunPulse 3s ease 1s infinite;
+    display:inline-block;
+  }
+
+  /* Warm accent glow on cards in summer */
+  .post-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,196,0,0.04); }
+  .auth-box { box-shadow: 0 0 60px rgba(88,166,255,0.08), 0 0 120px rgba(0,0,0,0.5), 0 0 200px rgba(255,196,0,0.03); }
+
+  /* ===== ANTISPAM TOAST ===== */
+  .spam-toast {
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+    background: rgba(255,100,100,0.12);
+    border: 1px solid rgba(255,100,100,0.3);
+    color: #ff9090;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 9999;
+    pointer-events:none;
+    white-space:nowrap;
+    animation: toastIn 0.25s ease forwards;
+    backdrop-filter: blur(12px);
+  }
+  .spam-toast.out { animation: toastOut 0.25s ease forwards; }
+
+  /* Cooldown visual on post button */
+  .post-btn:disabled, .chaos-btn:disabled {
+    opacity: 0.4; cursor:not-allowed;
+  }
+  .cooldown-bar {
+    height:2px; background:rgba(255,100,100,0.3); border-radius:2px;
+    margin-top:8px; overflow:hidden; display:none;
+  }
+  .cooldown-bar.active { display:block; }
+  .cooldown-fill {
+    height:100%;
+    background: linear-gradient(90deg, #ff6464, rgba(255,100,100,0.3));
+    border-radius:2px;
+    transition: width 0.1s linear;
+  }
+
+  /* ===== USERNAME CHECK INDICATOR ===== */
+  .nick-status {
+    font-size:11px; margin-top:4px; min-height:16px;
+    transition: color 0.2s;
+  }
+  .nick-status.ok    { color:#64ff96; }
+  .nick-status.taken { color:#ff6464; }
+  .nick-status.checking { color:var(--text3); }
+
   /* === SCREEN SYSTEM === */
   .screen { display:none; animation: fadeIn 0.3s ease; }
   .screen.active { display:block; }
@@ -528,16 +632,41 @@
     background: rgba(88,166,255,0.08); border:1px solid var(--border2);
     font-size:12px; color: var(--accent); margin-bottom:12px;
   }
-  .weirdness-bar {
-    display:flex; align-items:center; gap:10px; margin-top:8px;
+  /* === WEIRDNESS BAR (10 levels) === */
+  .weirdness-bar { display:flex; flex-direction:column; gap:6px; margin-top:12px; }
+  .weirdness-header { display:flex; align-items:center; justify-content:space-between; }
+  .weirdness-label { font-size:12px; color: var(--text2); font-weight:500; }
+  .weirdness-level-name {
+    font-size:11px; font-weight:700; letter-spacing:0.06em;
+    padding: 2px 8px; border-radius:10px;
+    transition: all 0.4s;
   }
-  .weirdness-label { font-size:12px; color: var(--text2); }
-  .weirdness-dots { display:flex; gap:4px; }
-  .w-dot {
-    width:10px; height:10px; border-radius:50%;
+  .weirdness-track {
+    display:flex; gap:3px; align-items:center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius:8px; padding:5px 6px;
+  }
+  .w-seg {
+    flex:1; height:8px; border-radius:4px;
     background: var(--border);
+    transition: background 0.35s, box-shadow 0.35s, transform 0.2s;
+    position:relative;
   }
-  .w-dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .w-seg.lit { transform: scaleY(1.15); }
+  /* Level colour bands */
+  .w-seg[data-lv="1"].lit  { background:#4CAF50; box-shadow:0 0 6px #4CAF5088; }
+  .w-seg[data-lv="2"].lit  { background:#66BB6A; box-shadow:0 0 6px #66BB6A88; }
+  .w-seg[data-lv="3"].lit  { background:#FFEB3B; box-shadow:0 0 6px #FFEB3B88; }
+  .w-seg[data-lv="4"].lit  { background:#FFD600; box-shadow:0 0 6px #FFD60088; }
+  .w-seg[data-lv="5"].lit  { background:#FFA726; box-shadow:0 0 6px #FFA72688; }
+  .w-seg[data-lv="6"].lit  { background:#FF7043; box-shadow:0 0 6px #FF704388; }
+  .w-seg[data-lv="7"].lit  { background:#EF5350; box-shadow:0 0 6px #EF535088; }
+  .w-seg[data-lv="8"].lit  { background:#E91E63; box-shadow:0 0 6px #E91E6388; }
+  .w-seg[data-lv="9"].lit  { background:#9C27B0; box-shadow:0 0 7px #9C27B099; }
+  .w-seg[data-lv="10"].lit { background:linear-gradient(90deg,#9C27B0,#ff00ff); box-shadow:0 0 10px #ff00ff88; animation:wPulse 1.2s ease infinite; }
+  @keyframes wPulse { 0%,100%{box-shadow:0 0 10px #ff00ff88} 50%{box-shadow:0 0 20px #ff00ffcc} }
+  .weirdness-desc { font-size:11px; color:var(--text3); min-height:14px; transition:color 0.3s; }
   .profile-stats { display:flex; gap:16px; margin-top:12px; }
   .profile-stat { text-align:center; }
   .stat-num { font-size:20px; font-weight:700; }
@@ -827,7 +956,8 @@
 </head>
 <body>
 
-<!-- ===== AUTH ===== -->
+<!-- ===== ЛЕТНИЕ ЭМОДЗИ (фон) ===== -->
+<div id="summer-emojis" aria-hidden="true"></div>
 <div id="screen-auth" class="screen active">
   <div class="auth-bg"></div>
   <div class="auth-grid"></div>
@@ -858,7 +988,8 @@
     <div id="auth-register" style="display:none;">
       <div class="form-group">
         <label class="form-label" data-i18n="nickname">НИК</label>
-        <input class="form-input" id="reg-nick" type="text" placeholder="твой_ник" autocomplete="off">
+        <input class="form-input" id="reg-nick" type="text" placeholder="твой_ник" autocomplete="off" oninput="checkNickAvailability(this.value)">
+        <div class="nick-status" id="nick-status"></div>
       </div>
       <div class="form-group">
         <label class="form-label" data-i18n="password">ПАРОЛЬ</label>
@@ -909,6 +1040,10 @@
     <div class="sidebar-logo">
       <div class="sidebar-logo-text">KDCHD NETWORK</div>
       <div class="sidebar-alpha">КД ЧД · OPEN ALPHA</div>
+    </div>
+    <div class="summer-sun">
+      <span class="sun-icon">☀️</span>
+      <span>ЛЕТО 2026 · ALPHA v0.2</span>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-item active" onclick="showPage('feed')" id="nav-feed">
@@ -995,6 +1130,9 @@
             </button>
             <button class="chaos-btn" onclick="createPost()">💥 СДЕЛАТЬ ХАОС</button>
           </div>
+          <div class="cooldown-bar" id="post-cooldown-bar">
+            <div class="cooldown-fill" id="post-cooldown-fill" style="width:100%"></div>
+          </div>
         </div>
         <div id="feed-list"></div>
       </div>
@@ -1041,16 +1179,24 @@
           <div class="profile-name" id="profile-name-display">...</div>
           <div class="profile-desc" id="profile-desc-display">...</div>
           <div class="profile-status" id="profile-status-display">...</div>
-          <div class="weirdness-bar">
-            <span class="weirdness-label" data-i18n="weirdness">Странность:</span>
-            <div class="weirdness-dots" id="weirdness-dots">
-              <div class="w-dot"></div>
-              <div class="w-dot"></div>
-              <div class="w-dot"></div>
-              <div class="w-dot"></div>
-              <div class="w-dot"></div>
+          <div class="weirdness-bar" id="weirdness-bar">
+            <div class="weirdness-header">
+              <span class="weirdness-label" data-i18n="weirdness">Странность:</span>
+              <span class="weirdness-level-name" id="weirdness-level-name">🟢 Нормальный</span>
             </div>
-            <span style="font-size:11px;color:var(--text3);" id="weirdness-label-text">🟢 Нормальный</span>
+            <div class="weirdness-track" id="weirdness-track">
+              <div class="w-seg" data-lv="1"></div>
+              <div class="w-seg" data-lv="2"></div>
+              <div class="w-seg" data-lv="3"></div>
+              <div class="w-seg" data-lv="4"></div>
+              <div class="w-seg" data-lv="5"></div>
+              <div class="w-seg" data-lv="6"></div>
+              <div class="w-seg" data-lv="7"></div>
+              <div class="w-seg" data-lv="8"></div>
+              <div class="w-seg" data-lv="9"></div>
+              <div class="w-seg" data-lv="10"></div>
+            </div>
+            <div class="weirdness-desc" id="weirdness-desc"></div>
           </div>
           <div class="profile-stats">
             <div class="profile-stat"><div class="stat-num" id="stat-posts">0</div><div class="stat-label" data-i18n="posts">Постов</div></div>
@@ -1472,16 +1618,27 @@ function doLogin() {
 }
 
 function doRegister() {
-  const nick = document.getElementById('reg-nick').value.trim();
-  const pass = document.getElementById('reg-pass').value;
-  const desc = document.getElementById('reg-desc').value.trim();
+  const nick   = document.getElementById('reg-nick').value.trim();
+  const pass   = document.getElementById('reg-pass').value;
+  const desc   = document.getElementById('reg-desc').value.trim();
   const status = document.getElementById('reg-status').value;
-  const err = document.getElementById('reg-error');
-  if(!nick||!pass) { err.textContent='Ник и пароль обязательны'; err.style.display='block'; return; }
-  if(nick.length < 3) { err.textContent='Ник минимум 3 символа'; err.style.display='block'; return; }
-  if(pass.length < 4) { err.textContent='Пароль минимум 4 символа'; err.style.display='block'; return; }
-  if(state.users.find(u=>u.nick.toLowerCase()===nick.toLowerCase())) { err.textContent='Ник занят'; err.style.display='block'; return; }
+  const err    = document.getElementById('reg-error');
+
+  const showErr = msg => { err.textContent=msg; err.style.display='block'; };
   err.style.display='none';
+
+  if(!nick||!pass)    return showErr('Ник и пароль обязательны');
+  if(nick.length < 3) return showErr('Ник минимум 3 символа');
+  if(pass.length < 4) return showErr('Пароль минимум 4 символа');
+  if(!/^[a-zA-Zа-яА-ЯёЁ0-9_\-\.]+$/.test(nick)) return showErr('Ник: только буквы, цифры, _ и -');
+
+  // Block if nick-status shows taken
+  const statusEl = document.getElementById('nick-status');
+  if(statusEl?.classList.contains('taken')) return showErr('Этот ник уже занят');
+
+  // Local duplicate check (fast)
+  if(state.users.find(u=>u.nick.toLowerCase()===nick.toLowerCase())) return showErr('Ник занят');
+
   const user = {
     id:'u'+Date.now(), nick, passHash:hashPass(pass), avatar:state.selectedAvatar||'🤖',
     bannerUrl: null,
@@ -1491,6 +1648,12 @@ function doRegister() {
   state.currentUser = user.id;
   saveState();
   saveSession();
+
+  // Register username in Firestore (async, non-blocking)
+  if(typeof window._registerNickFirestore === 'function') {
+    window._registerNickFirestore(nick, user.id).catch(e=>console.warn('[FB] nick register:', e));
+  }
+
   enterApp();
 }
 
@@ -1527,8 +1690,13 @@ function updateSidebarUser() {
   const avaEl = document.getElementById('sidebar-ava');
   if(avaEl) avaEl.innerHTML = avatarHtml(u.avatar, 32);
   document.getElementById('sidebar-name').textContent = '@'+u.nick;
-  const wLabels = ['🟢 Нормальный','🟡 Странный','🟠 Очень странный','🔴 Эксперимент','⚫ Вышел из-под контроля'];
-  document.getElementById('sidebar-level').textContent = wLabels[Math.min((u.weirdness||1)-1,4)];
+  const wLabels = [
+    '🟢 Нормальный','🟢 Немного странный','🟡 Странный','🟡 Очень странный',
+    '🟠 Экспериментатор','🟠 Хаос-инженер','🔴 Аномалия',
+    '🔴 Вне системы','🟣 Эксперимент','⚫ Выход из-под контроля'
+  ];
+  const w = Math.max(0, Math.min((u.weirdness||1)-1, 9));
+  document.getElementById('sidebar-level').textContent = wLabels[w];
   const compAva = document.getElementById('composer-ava');
   if(compAva) compAva.innerHTML = avatarHtml(u.avatar, 30);
 }
@@ -1920,11 +2088,36 @@ function renderProfile() {
   document.getElementById('profile-name-display').textContent = '@'+cu.nick;
   document.getElementById('profile-desc-display').textContent = cu.desc||'...';
   document.getElementById('profile-status-display').textContent = cu.status||'🌐 Создаю проект';
-  const wLabels = ['🟢 Нормальный','🟡 Странный','🟠 Очень странный','🔴 Эксперимент','⚫ Эксперимент вышел из-под контроля'];
-  const w = Math.min((cu.weirdness||1)-1,4);
-  document.getElementById('weirdness-label-text').textContent = wLabels[w];
-  const dots = document.querySelectorAll('#weirdness-dots .w-dot');
-  dots.forEach((d,i)=>d.classList.toggle('active', i<=w));
+
+  // ── 10-level weirdness ──────────────────────────────────
+  const WEIRD_LEVELS = [
+    { name:'🟢 Нормальный',           desc:'Всё под контролем. Пока.',                          color:'#4CAF50' },
+    { name:'🟢 Немного странный',      desc:'Что-то не так, но ещё терпимо.',                   color:'#66BB6A' },
+    { name:'🟡 Странный',             desc:'Окружающие начинают замечать.',                     color:'#FFEB3B' },
+    { name:'🟡 Очень странный',        desc:'Идеи приходят в 3 ночи. Это нормально.',           color:'#FFD600' },
+    { name:'🟠 Экспериментатор',       desc:'Проекты плодятся быстрее чем заканчиваются.',      color:'#FFA726' },
+    { name:'🟠 Хаос-инженер',         desc:'Баги — это фичи. Ты уверен в этом.',               color:'#FF7043' },
+    { name:'🔴 Аномалия',             desc:'Реальность стала гибкой. Это удобно.',             color:'#EF5350' },
+    { name:'🔴 Вне системы',          desc:'Правила существуют для других.',                   color:'#E91E63' },
+    { name:'🟣 Эксперимент',          desc:'Ты сам стал субъектом эксперимента.',              color:'#9C27B0' },
+    { name:'⚫ Выход из-под контроля', desc:'Поздравляем. Или соболезнуем. Непонятно.',         color:'#ff00ff' },
+  ];
+  const w = Math.max(0, Math.min((cu.weirdness||1) - 1, 9));
+  const lvl = WEIRD_LEVELS[w];
+
+  const nameEl = document.getElementById('weirdness-level-name');
+  if(nameEl) {
+    nameEl.textContent = lvl.name;
+    nameEl.style.background = lvl.color + '22';
+    nameEl.style.color = lvl.color;
+    nameEl.style.border = `1px solid ${lvl.color}44`;
+  }
+  const descEl = document.getElementById('weirdness-desc');
+  if(descEl) { descEl.textContent = lvl.desc; descEl.style.color = lvl.color + 'bb'; }
+
+  document.querySelectorAll('#weirdness-track .w-seg').forEach((seg, i) => {
+    seg.classList.toggle('lit', i <= w);
+  });
   const myPosts = state.posts.filter(p=>p.author===cu.id);
   const myProjs = state.projects.filter(p=>p.owner===cu.id);
   const myReactions = myPosts.reduce((s,p)=>s+Object.values(p.reactions).reduce((a,b)=>a+b,0),0);
@@ -2024,6 +2217,136 @@ function generateQRCells() {
   return html;
 }
 
+// ========== ЛЕТНИЕ ЭМОДЗИ ==========
+(function() {
+  const EMOJIS = ['☀️','🌊','🌴','🍉','🍦','🌸','🦋','🌺','⭐','🌙','✨','🌈','🏄','🎈','🌻','🍋','🐚','🦀','🌅','💫'];
+  const container = document.getElementById('summer-emojis');
+  if(!container) return;
+
+  function spawn() {
+    const el = document.createElement('span');
+    el.className = 'emoji-particle';
+    el.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+
+    const size    = 16 + Math.random() * 16;        // 16–32px
+    const left    = Math.random() * 100;             // % от ширины
+    const dur     = 8 + Math.random() * 14;         // 8–22s подъём
+    const sway    = 4 + Math.random() * 6;           // 4–10s качание
+    const delay   = Math.random() * 4;               // стартовая задержка
+    const opacity = 0.25 + Math.random() * 0.35;    // 0.25–0.6
+
+    el.style.cssText = `
+      left: ${left}%;
+      font-size: ${size}px;
+      opacity: ${opacity};
+      animation-duration: ${dur}s, ${sway}s;
+      animation-delay: ${delay}s, ${delay}s;
+    `;
+
+    container.appendChild(el);
+
+    // Удаляем после одного цикла
+    setTimeout(() => el.remove(), (dur + delay) * 1000 + 500);
+  }
+
+  // Первый залп — 12 штук сразу со случайными задержками
+  for(let i = 0; i < 12; i++) {
+    setTimeout(spawn, Math.random() * 3000);
+  }
+
+  // Потом спавним по одному каждые ~1.8 сек
+  setInterval(spawn, 1800);
+})();
+// ========== ANTISPAM ==========
+// window.* — доступны из Firebase <script type="module">
+window.SPAM = {
+  COOLDOWN_MS:     15000,
+  MIN_LENGTH:      3,
+  MAX_REPEAT_CHAR: 5,
+  MAX_REPEAT_WORD: 3,
+  lastPostTime:    0,
+};
+
+window.checkSpam = function(text) {
+  if(text.length < window.SPAM.MIN_LENGTH)
+    return { ok:false, msg:'Слишком коротко' };
+  if(/(.){4,}/u.test(text))
+    return { ok:false, msg:'Слишком много повторяющихся символов 🙄' };
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+  if(words.length > 1) {
+    const cnt = {};
+    for(const w of words) cnt[w] = (cnt[w]||0)+1;
+    if(Math.max(...Object.values(cnt)) > window.SPAM.MAX_REPEAT_WORD)
+      return { ok:false, msg:'Слишком много одинаковых слов 🔁' };
+  }
+  const elapsed = Date.now() - window.SPAM.lastPostTime;
+  if(window.SPAM.lastPostTime > 0 && elapsed < window.SPAM.COOLDOWN_MS) {
+    const left = Math.ceil((window.SPAM.COOLDOWN_MS - elapsed) / 1000);
+    return { ok:false, msg:`Подожди ещё ${left} сек ⏳`, cooldown:true };
+  }
+  return { ok:true };
+};
+
+window.showSpamToast = function(msg) {
+  let toast = document.getElementById('spam-toast-el');
+  if(toast) toast.remove();
+  toast = document.createElement('div');
+  toast.id = 'spam-toast-el';
+  toast.className = 'spam-toast';
+  toast.textContent = '⚠️ ' + msg;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.classList.add('out'); setTimeout(() => toast.remove(), 320); }, 2800);
+};
+
+window.startCooldownBar = function(ms) {
+  const bar  = document.getElementById('post-cooldown-bar');
+  const fill = document.getElementById('post-cooldown-fill');
+  if(!bar || !fill) return;
+  const btns = [document.getElementById('real-post-btn'), document.querySelector('.chaos-btn')].filter(Boolean);
+  bar.classList.add('active');
+  btns.forEach(b => b.disabled = true);
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  const start = Date.now();
+  const tick = () => {
+    const ratio = Math.max(0, 1 - (Date.now() - start) / ms);
+    fill.style.width = (ratio * 100) + '%';
+    if(ratio > 0) { requestAnimationFrame(tick); }
+    else { bar.classList.remove('active'); btns.forEach(b => b.disabled = false); }
+  };
+  requestAnimationFrame(tick);
+};
+
+// ========== USERNAME AVAILABILITY CHECK ==========
+// Debounced check — вызывается из oninput на поле ника
+let _nickCheckTimer = null;
+function checkNickAvailability(val) {
+  const statusEl = document.getElementById('nick-status');
+  if(!statusEl) return;
+  const nick = val.trim();
+  if(nick.length < 3) { statusEl.textContent = ''; statusEl.className='nick-status'; return; }
+
+  // Сначала проверяем локально (быстро)
+  if(state.users.find(u=>u.nick.toLowerCase()===nick.toLowerCase())) {
+    statusEl.textContent = '✗ Занят'; statusEl.className='nick-status taken'; return;
+  }
+
+  statusEl.textContent = '...'; statusEl.className='nick-status checking';
+  clearTimeout(_nickCheckTimer);
+  _nickCheckTimer = setTimeout(async () => {
+    // Firestore check будет вызван из Firebase-модуля если доступен
+    if(typeof window._checkNickFirestore === 'function') {
+      const taken = await window._checkNickFirestore(nick);
+      if(document.getElementById('reg-nick')?.value.trim() !== nick) return; // устарело
+      statusEl.textContent = taken ? '✗ Занят' : '✓ Свободен';
+      statusEl.className = 'nick-status ' + (taken ? 'taken' : 'ok');
+    } else {
+      statusEl.textContent = '✓ Свободен';
+      statusEl.className = 'nick-status ok';
+    }
+  }, 500);
+}
+
 // ========== MODAL ==========
 function openModal(id) { document.getElementById(id)?.classList.add('show'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('show'); }
@@ -2047,9 +2370,8 @@ if(state.currentUser && state.users.find(u=>u.id===state.currentUser)) {
 import { initializeApp }     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAnalytics }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import {
-  getFirestore, collection, addDoc,
-  onSnapshot, query, orderBy,
-  serverTimestamp, Timestamp
+  getFirestore, collection, addDoc, doc, getDoc, setDoc, getDocs,
+  onSnapshot, query, orderBy, where, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -2062,23 +2384,21 @@ const firebaseConfig = {
   measurementId:     "G-XS5SB15QWH"
 };
 
-const fbApp = initializeApp(firebaseConfig);
+const fbApp     = initializeApp(firebaseConfig);
 const analytics = getAnalytics(fbApp);
-const db = getFirestore(fbApp);
+const db        = getFirestore(fbApp);
 
-// ── Хелпер: Timestamp → миллисекунды ─────────────────────
-// serverTimestamp() при записи возвращает null до подтверждения сервером,
-// поэтому всегда используем числовое поле timeMs как основное
+// ── Timestamp → ms ───────────────────────────────────────
 function toMs(val) {
   if(!val) return Date.now();
   if(typeof val === 'number') return val;
   if(val instanceof Timestamp) return val.toMillis();
-  if(val && typeof val.toMillis === 'function') return val.toMillis();
-  if(val && val.seconds) return val.seconds * 1000;
+  if(val?.toMillis) return val.toMillis();
+  if(val?.seconds)  return val.seconds * 1000;
   return Date.now();
 }
 
-// ── Статус-точка в сайдбаре ───────────────────────────────
+// ── Status dot ───────────────────────────────────────────
 function setFbStatus(ok, msg) {
   let dot = document.getElementById('fb-status-dot');
   if(!dot) {
@@ -2091,234 +2411,221 @@ function setFbStatus(ok, msg) {
     });
     document.querySelector('.sidebar-alpha')?.appendChild(dot);
   }
-  const color = ok ? '#64ff96' : '#ff6464';
-  dot.style.background  = color;
-  dot.style.boxShadow   = `0 0 6px ${color}`;
-  dot.title = msg || (ok ? 'Firebase подключён' : 'Офлайн — данные локальны');
+  const c = ok ? '#64ff96' : '#ff6464';
+  dot.style.background = c;
+  dot.style.boxShadow  = `0 0 6px ${c}`;
+  dot.title = msg || (ok ? 'Firebase подключён' : 'Офлайн');
 }
 
-// ── REALTIME: посты ───────────────────────────────────────
-// Слушаем ВСЕ изменения — не только добавление, но и обновления
-// Сортировка по timeMs (число) — не serverTimestamp чтобы избежать null-ошибок
+// ── Map Firestore doc → post object ──────────────────────
+function docToPost(docSnap) {
+  const d = docSnap.data();
+  return {
+    id:            docSnap.id,
+    author:        d.author        || 'unknown',
+    authorNick:    d.authorNick    || d.author || 'unknown',
+    authorAvatar:  d.authorAvatar  || '👾',
+    text:          d.text          || '',
+    tag:           d.tag           || 'idea',
+    timeMs:        toMs(d.timeMs),
+    time:          toMs(d.timeMs),
+    reactions:     d.reactions     || {like:0, brain:0, fire:0, what:0},
+    userReactions: d.userReactions || {},
+    image:         d.image         || null,
+  };
+}
+
+// ── REALTIME: feed ────────────────────────────────────────
+// Try ordered first, fallback to unordered if no index
 function subscribeToFeed() {
-  const q = query(
-    collection(db, 'posts'),
-    orderBy('timeMs', 'desc')   // числовое поле, не serverTimestamp
-  );
-
-  onSnapshot(q,
-    (snap) => {
-      // Полностью заменяем FB-посты в state (правда о данных — в Firestore)
-      const fbIds  = new Set();
-      const newFbPosts = [];
-
-      snap.forEach(docSnap => {
-        const d  = docSnap.data();
-        const id = docSnap.id;
-        fbIds.add(id);
-        newFbPosts.push({
-          id,
-          author:        d.author        || 'unknown',
-          authorNick:    d.authorNick    || '',
-          authorAvatar:  d.authorAvatar  || '👾',
-          text:          d.text          || '',
-          tag:           d.tag           || 'idea',
-          timeMs:        toMs(d.timeMs),
-          time:          toMs(d.timeMs),   // обратная совместимость
-          reactions:     d.reactions     || {like:0,brain:0,fire:0,what:0},
-          userReactions: d.userReactions || {},
-          image:         d.image         || null,
+  const tryOrdered = () => {
+    const q = query(collection(db, 'posts'), orderBy('timeMs', 'desc'));
+    return onSnapshot(q, handleFeedSnap, err => {
+      if(err.code === 'failed-precondition') {
+        console.warn('[FB] No timeMs index, falling back to client sort');
+        onSnapshot(collection(db, 'posts'), handleFeedSnap, err2 => {
+          console.error('[FB] feed error:', err2.code);
+          setFbStatus(false, 'Ошибка: ' + err2.code);
         });
-      });
-
-      // Оставляем только локальные (не-FB) посты + все FB-посты
-      const localOnly = state.posts.filter(p => !p.id.startsWith('fb_') && !fbIds.has(p.id));
-      state.posts = [...newFbPosts, ...localOnly];
-
-      saveState();
-      if(typeof renderFeed === 'function') renderFeed();
-      setFbStatus(true, `Firebase: ${newFbPosts.length} постов`);
-    },
-    (err) => {
-      console.error('[FB] posts onSnapshot error:', err.code, err.message);
-      // Частая причина: нет индекса — создаём без orderBy как fallback
-      if(err.code === 'failed-precondition' || err.code === 'unimplemented') {
-        subscribeFeedNoOrder();
       } else {
-        setFbStatus(false, 'Ошибка: ' + err.message);
+        setFbStatus(false, err.message);
       }
-    }
-  );
+    });
+  };
+  tryOrdered();
 }
 
-// Fallback без сортировки (если нет индекса на timeMs)
-function subscribeFeedNoOrder() {
-  onSnapshot(collection(db, 'posts'),
-    (snap) => {
-      const newFbPosts = [];
-      snap.forEach(docSnap => {
-        const d  = docSnap.data();
-        newFbPosts.push({
-          id:            docSnap.id,
-          author:        d.author        || 'unknown',
-          authorNick:    d.authorNick    || '',
-          authorAvatar:  d.authorAvatar  || '👾',
-          text:          d.text          || '',
-          tag:           d.tag           || 'idea',
-          timeMs:        toMs(d.timeMs),
-          time:          toMs(d.timeMs),
-          reactions:     d.reactions     || {like:0,brain:0,fire:0,what:0},
-          userReactions: d.userReactions || {},
-          image:         d.image         || null,
-        });
-      });
-      // Сортируем на клиенте по timeMs убыванию
-      newFbPosts.sort((a,b) => b.timeMs - a.timeMs);
-      const fbIds   = new Set(newFbPosts.map(p => p.id));
-      const localOnly = state.posts.filter(p => !fbIds.has(p.id));
-      state.posts = [...newFbPosts, ...localOnly];
-      saveState();
-      if(typeof renderFeed === 'function') renderFeed();
-      setFbStatus(true, `Firebase (без индекса): ${newFbPosts.length} постов`);
-    },
-    (err) => {
-      console.error('[FB] posts fallback error:', err.code, err.message);
-      setFbStatus(false, 'Ошибка Firestore: ' + err.code);
-    }
+function handleFeedSnap(snap) {
+  // Build full FB posts list
+  const fbPosts = [];
+  const fbIds   = new Set();
+  snap.forEach(docSnap => {
+    fbIds.add(docSnap.id);
+    fbPosts.push(docToPost(docSnap));
+  });
+  fbPosts.sort((a,b) => b.timeMs - a.timeMs);
+
+  // Keep only truly local posts (pending, not yet confirmed by Firestore)
+  const localPending = state.posts.filter(p =>
+    p.id.startsWith('local_') && !fbIds.has(p.id)
   );
+
+  state.posts = [...localPending, ...fbPosts];
+  saveState();
+  if(typeof renderFeed === 'function') renderFeed();
+  setFbStatus(true, `${fbPosts.length} постов`);
 }
 
-// ── REALTIME: проекты ─────────────────────────────────────
+// ── REALTIME: projects ────────────────────────────────────
 function subscribeToProjects() {
-  onSnapshot(collection(db, 'projects'),
-    (snap) => {
-      const newFbProjs = [];
-      const fbIds = new Set();
-      snap.forEach(docSnap => {
-        const d = docSnap.data();
-        fbIds.add(docSnap.id);
-        newFbProjs.push({
-          id:       docSnap.id,
-          owner:    d.owner    || 'unknown',
-          icon:     d.icon     || '🎬',
-          name:     d.name     || 'Проект',
-          desc:     d.desc     || '',
-          status:   d.status   || 'dev',
-          progress: d.progress || 0,
-          update:   d.update   || '',
-          createdAt:toMs(d.createdAt),
-        });
+  onSnapshot(collection(db, 'projects'), snap => {
+    const fbProjs = [];
+    const fbIds   = new Set();
+    snap.forEach(docSnap => {
+      fbIds.add(docSnap.id);
+      const d = docSnap.data();
+      fbProjs.push({
+        id:        docSnap.id,
+        owner:     d.owner     || 'unknown',
+        icon:      d.icon      || '🎬',
+        name:      d.name      || 'Проект',
+        desc:      d.desc      || '',
+        status:    d.status    || 'dev',
+        progress:  d.progress  || 0,
+        update:    d.update    || '',
+        createdAt: toMs(d.createdAt),
       });
-      newFbProjs.sort((a,b) => b.createdAt - a.createdAt);
-      const localOnly = state.projects.filter(p => !fbIds.has(p.id));
-      state.projects = [...newFbProjs, ...localOnly];
-      saveState();
-      if(typeof renderProjects === 'function') renderProjects();
-    },
-    (err) => console.error('[FB] projects error:', err.code, err.message)
-  );
+    });
+    fbProjs.sort((a,b) => b.createdAt - a.createdAt);
+
+    const localPending = state.projects.filter(p => p.id.startsWith('local_pr_') && !fbIds.has(p.id));
+    state.projects = [...localPending, ...fbProjs];
+    saveState();
+    if(typeof renderProjects === 'function') renderProjects();
+  }, err => console.error('[FB] projects:', err.code));
 }
 
-// ── WRITE: создать пост ───────────────────────────────────
-// Переопределяем глобальную функцию
+// ── USERNAME: check in Firestore ──────────────────────────
+window._checkNickFirestore = async function(nick) {
+  try {
+    const docSnap = await getDoc(doc(db, 'usernames', nick.toLowerCase()));
+    return docSnap.exists();
+  } catch(e) {
+    console.warn('[FB] nick check error:', e.message);
+    return false; // Fail open — don't block registration on network error
+  }
+};
+
+// ── USERNAME: register in Firestore ──────────────────────
+window._registerNickFirestore = async function(nick, userId) {
+  await setDoc(doc(db, 'usernames', nick.toLowerCase()), {
+    uid:       userId,
+    nick:      nick,
+    createdAt: serverTimestamp(),
+  });
+};
+
+// ── WRITE: create post (with antispam) ───────────────────
 window.createPost = async function() {
   const textEl = document.getElementById('post-text-input');
   const text   = textEl?.value.trim();
-  const tag    = document.getElementById('post-tag-select')?.value || 'idea';
   if(!text) return;
+
+  // ── Antispam check (вызов через window — это ES module) ──
+  const spam = window.checkSpam(text);
+  if(!spam.ok) {
+    window.showSpamToast(spam.msg);
+    if(spam.cooldown) window.startCooldownBar(window.SPAM.COOLDOWN_MS - (Date.now() - window.SPAM.lastPostTime));
+    return;
+  }
 
   const cu = state.users.find(u => u.id === state.currentUser);
   if(!cu) return;
 
+  const tag    = document.getElementById('post-tag-select')?.value || 'idea';
   const imgEl  = document.getElementById('img-preview');
   const imgSrc = (imgEl && imgEl.style.display !== 'none' && imgEl.src) ? imgEl.src : null;
   const nowMs  = Date.now();
 
-  // 1. Сразу показываем локально (моментальный UI)
+  // Update rate-limit tracker
+  window.SPAM.lastPostTime = nowMs;
+  window.startCooldownBar(window.SPAM.COOLDOWN_MS);
+
+  // 1. Local optimistic update
   const localId = 'local_' + nowMs;
-  const localPost = {
+  state.posts.unshift({
     id: localId, author: cu.id,
     authorNick: cu.nick, authorAvatar: cu.avatar,
     text, tag, timeMs: nowMs, time: nowMs,
     reactions: {like:0,brain:0,fire:0,what:0},
     userReactions: {}, image: imgSrc
-  };
-  state.posts.unshift(localPost);
+  });
   cu.weirdness = Math.min((cu.weirdness||1)+1, 5);
   saveState();
 
+  // Clear composer
   textEl.value = '';
   if(imgEl) { imgEl.src=''; imgEl.style.display='none'; }
   const fileInput = document.getElementById('img-file-input');
-  if(fileInput) fileInput.value='';
+  if(fileInput) fileInput.value = '';
 
   if(typeof renderFeed        === 'function') renderFeed();
   if(typeof updateSidebarUser === 'function') updateSidebarUser();
   if(typeof renderProfile     === 'function') renderProfile();
 
-  // 2. Пишем в Firestore — используем timeMs (число) для надёжной сортировки
+  // 2. Write to Firestore
   try {
     const docRef = await addDoc(collection(db, 'posts'), {
       author:       cu.id,
       authorNick:   cu.nick,
       authorAvatar: cu.avatar,
       text, tag,
-      timeMs:       nowMs,          // число — основное поле сортировки
-      createdAt:    serverTimestamp(), // серверная метка — только для аудита
-      reactions:    {like:0,brain:0,fire:0,what:0},
-      userReactions:{},
-      image:        imgSrc || null,
+      timeMs:    nowMs,
+      createdAt: serverTimestamp(),
+      reactions: {like:0,brain:0,fire:0,what:0},
+      userReactions: {},
+      image: imgSrc || null,
     });
-
-    // Заменяем локальный ID на реальный Firestore ID
+    // Swap local ID for real Firestore ID (onSnapshot will also handle this)
     const idx = state.posts.findIndex(p => p.id === localId);
     if(idx !== -1) state.posts[idx].id = docRef.id;
     saveState();
-    console.log('[FB] пост записан:', docRef.id);
-
   } catch(e) {
-    console.error('[FB] ошибка записи поста:', e.code, e.message);
-    // Пост остаётся локально — не теряется
+    console.error('[FB] post write error:', e.code, e.message);
+    showSpamToast('Ошибка отправки — сохранено локально');
   }
 };
 
-// ── WRITE: создать проект ─────────────────────────────────
+// ── WRITE: create project ─────────────────────────────────
 window.addProject = async function() {
   const cu = state.users.find(u => u.id === state.currentUser);
   if(!cu) return;
-
   const nameEl = document.getElementById('proj-name');
   const name   = nameEl?.value.trim();
   if(!name) {
     if(nameEl) { nameEl.style.borderColor='rgba(255,100,100,0.5)'; setTimeout(()=>nameEl.style.borderColor='',1500); }
     return;
   }
-
-  const desc     = document.getElementById('proj-desc')?.value.trim()    || 'Загадочный проект';
+  const desc     = document.getElementById('proj-desc')?.value.trim()  || 'Загадочный проект';
   const rawProg  = parseInt(document.getElementById('proj-progress')?.value);
   const progress = isNaN(rawProg) ? 0 : Math.max(0, Math.min(100, rawProg));
-  const status   = document.getElementById('proj-status')?.value          || 'dev';
-  const update   = document.getElementById('proj-update')?.value.trim()   || 'Только начал';
+  const status   = document.getElementById('proj-status')?.value        || 'dev';
+  const update   = document.getElementById('proj-update')?.value.trim() || 'Только начал';
   const nowMs    = Date.now();
 
   const projData = {
     owner:cu.id, icon:state.selectedProjectIcon||'🎬',
     name, desc, status, progress, update, createdAt:nowMs
   };
-
-  // Локально сразу
   const localId = 'local_pr_' + nowMs;
   state.projects.unshift({id:localId, ...projData});
   saveState();
   closeModal('modal-project');
-  ['proj-name','proj-desc','proj-update'].forEach(id => {
-    const el = document.getElementById(id); if(el) el.value='';
-  });
+  ['proj-name','proj-desc','proj-update'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   const pp = document.getElementById('proj-progress'); if(pp) pp.value='0';
   if(typeof renderProjects === 'function') renderProjects();
   if(typeof renderProfile  === 'function') renderProfile();
 
-  // Потом в Firestore
   try {
     const docRef = await addDoc(collection(db, 'projects'), {
       ...projData, createdAt: serverTimestamp()
@@ -2326,24 +2633,17 @@ window.addProject = async function() {
     const idx = state.projects.findIndex(p => p.id === localId);
     if(idx !== -1) state.projects[idx].id = docRef.id;
     saveState();
-    console.log('[FB] проект записан:', docRef.id);
   } catch(e) {
-    console.error('[FB] ошибка записи проекта:', e.code, e.message);
+    console.error('[FB] project write error:', e.code, e.message);
   }
 };
 
-// ── Запуск ────────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────
 setFbStatus(false, 'Подключение...');
-try {
-  subscribeToFeed();
-  subscribeToProjects();
-} catch(e) {
-  console.error('[FB] init error:', e);
-  setFbStatus(false, 'Ошибка инициализации');
-}
-
-window._fb = { db, addDoc, collection, serverTimestamp };
-console.log('[FB] Firebase модуль запущен ✓');
+subscribeToFeed();
+subscribeToProjects();
+window._fb = { db, serverTimestamp };
+console.log('[KDCHD] Firebase v0.2 ✓');
 </script>
 </body>
 </html>
