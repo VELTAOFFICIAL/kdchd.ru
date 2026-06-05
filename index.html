@@ -78,7 +78,7 @@
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
 
-  /* ===== SUMMER THEME v0.3 ===== */
+  /* ===== SUMMER THEME v0.2 ===== */
   @keyframes sunRise { 0%{transform:translateY(4px) scale(0.95);opacity:0.7} 100%{transform:translateY(0) scale(1);opacity:1} }
   @keyframes sunPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,196,0,0.15)} 50%{box-shadow:0 0 24px 8px rgba(255,196,0,0.12)} }
   @keyframes waveFloat { 0%,100%{transform:translateX(0)} 50%{transform:translateX(-8px)} }
@@ -1140,6 +1140,76 @@
   }
   .status-opt.selected svg { color: var(--accent); }
 
+  /* === FOLLOW BUTTON === */
+  #follow-btn {
+    background: rgba(255,184,48,0.10);
+    color: var(--accent);
+  }
+  #follow-btn:hover {
+    background: rgba(255,184,48,0.20);
+    transform: scale(1.03);
+  }
+  #follow-btn.following {
+    background: rgba(255,184,48,0.05);
+    color: var(--text2);
+    border-color: var(--border);
+  }
+  #follow-btn.following:hover {
+    background: rgba(255,80,80,0.10);
+    color: #ff6464;
+    border-color: rgba(255,80,80,0.3);
+  }
+
+  /* === CUSTOMIZATION UI === */
+  .accent-opt {
+    width: 36px; height: 36px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .accent-opt:hover { transform: scale(1.15); }
+  .accent-opt.selected { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+
+  .bg-theme-opt {
+    border: 1.5px solid var(--border);
+    border-radius: 8px; cursor: pointer;
+    overflow: hidden; transition: border-color 0.2s, transform 0.2s;
+  }
+  .bg-theme-opt:hover { transform: scale(1.03); border-color: var(--accent); }
+  .bg-theme-opt.selected { border-color: var(--accent); box-shadow: 0 0 8px rgba(255,184,48,0.3); }
+  .bg-theme-label {
+    font-size: 11px; font-weight: 700;
+    text-align: center; padding: 5px 4px;
+    background: var(--bg3); color: var(--text2);
+    letter-spacing: 0.04em;
+  }
+
+  .font-opt {
+    padding: 7px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text2); font-size: 13px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .font-opt:hover { border-color: var(--accent); color: var(--text); }
+  .font-opt.selected { border-color: var(--accent); background: rgba(255,184,48,0.08); color: var(--accent); }
+
+  .anim-opt, .layout-opt {
+    padding: 7px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text2); font-size: 12px; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .anim-opt:hover, .layout-opt:hover { border-color: var(--accent); color: var(--text); }
+  .anim-opt.selected, .layout-opt.selected { border-color: var(--accent); background: rgba(255,184,48,0.08); color: var(--accent); }
+
+  /* Compact layout */
+  body.layout-compact .post-card { padding: 10px 14px; }
+  body.layout-compact .post-text { font-size: 13px; }
+  body.layout-compact .post-header { margin-bottom: 6px; }
+  /* Wide layout */
+  body.layout-wide .main-content { max-width: 900px; }
+  body.layout-wide .post-card { padding: 20px 24px; }
+
   /* Loading anim */
   .loader {
     display:inline-block;
@@ -1422,13 +1492,38 @@
             <div class="profile-stat"><div class="stat-num" id="stat-posts">0</div><div class="stat-label" data-i18n="posts">Постов</div></div>
             <div class="profile-stat"><div class="stat-num" id="stat-projects">0</div><div class="stat-label" data-i18n="projects">Проектов</div></div>
             <div class="profile-stat"><div class="stat-num" id="stat-reactions">0</div><div class="stat-label" data-i18n="reactions">Реакций</div></div>
+            <div class="profile-stat"><div class="stat-num" id="stat-followers">0</div><div class="stat-label">Следящих</div></div>
           </div>
         </div>
       </div>
       <div id="profile-posts-list"></div>
     </div>
 
-    <!-- QR PAGE -->
+    <!-- ЧУЖОЙ ПРОФИЛЬ -->
+    <div class="page" id="page-user-profile" style="display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <button onclick="closeUserProfile()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;padding:7px 14px;color:var(--text2);font-size:13px;cursor:pointer;">← Назад</button>
+        <div style="font-size:12px;color:var(--text3);" id="user-profile-breadcrumb">Профиль</div>
+      </div>
+      <div class="profile-header" id="user-profile-header">
+        <div class="profile-ava-big" id="user-profile-ava" style="display:flex;align-items:center;justify-content:center;width:70px;height:70px;flex-shrink:0;"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="user-profile-name">...</div>
+          <div class="profile-desc" id="user-profile-desc">...</div>
+          <div class="profile-status" id="user-profile-status">...</div>
+          <div class="profile-stats">
+            <div class="profile-stat"><div class="stat-num" id="user-stat-posts">0</div><div class="stat-label">Постов</div></div>
+            <div class="profile-stat"><div class="stat-num" id="user-stat-followers">0</div><div class="stat-label">Следящих</div></div>
+            <div class="profile-stat"><div class="stat-num" id="user-stat-reactions">0</div><div class="stat-label">Реакций</div></div>
+          </div>
+          <button id="follow-btn" onclick="toggleFollow()" style="margin-top:12px;padding:9px 24px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.06em;border:1.5px solid var(--accent);transition:all 0.2s;">
+            👁 СЛЕДИТЬ
+          </button>
+        </div>
+      </div>
+      <div style="margin-top:20px;font-size:12px;font-weight:700;color:var(--text3);letter-spacing:0.1em;margin-bottom:10px;">ПОСТЫ</div>
+      <div id="user-profile-posts"></div>
+    </div>
     <div class="page" id="page-qr">
       <div class="page-title">QR / Invite</div>
       <div class="page-sub" data-i18n="qr_sub">Поделись своим профилем или проектом</div>
@@ -1538,6 +1633,133 @@
           </div>
         </div>
         <button class="btn-primary" onclick="saveSettings()" data-i18n="save">СОХРАНИТЬ</button>
+        <hr class="divider">
+
+        <!-- ===== КАСТОМИЗАЦИЯ ИНТЕРФЕЙСА ===== -->
+        <div style="margin-bottom:8px;">
+          <div class="section-title" style="font-size:15px;margin-bottom:4px;">🎨 КАСТОМИЗАЦИЯ ИНТЕРФЕЙСА</div>
+          <div style="font-size:12px;color:var(--text3);">Сделай сайт своим</div>
+        </div>
+
+        <!-- ТЕМА АКЦЕНТА -->
+        <div class="form-group">
+          <label class="form-label">ЦВЕТ АКЦЕНТА</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;" id="accent-picker">
+            <div class="accent-opt" data-accent="#FFB830,#FF8C42" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#FFB830,#FF8C42);" title="Лето (дефолт)"></div>
+            <div class="accent-opt" data-accent="#58A6FF,#79C0FF" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#58A6FF,#79C0FF);" title="Синий"></div>
+            <div class="accent-opt" data-accent="#3DDC97,#00C57A" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#3DDC97,#00C57A);" title="Зелёный"></div>
+            <div class="accent-opt" data-accent="#FF6B9D,#FF4B7B" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#FF6B9D,#FF4B7B);" title="Розовый"></div>
+            <div class="accent-opt" data-accent="#B57BFF,#8A4FFF" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#B57BFF,#8A4FFF);" title="Фиолетовый"></div>
+            <div class="accent-opt" data-accent="#FF7A3D,#FF4E1F" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#FF7A3D,#FF4E1F);" title="Оранжевый"></div>
+            <div class="accent-opt" data-accent="#00D4FF,#0094FF" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#00D4FF,#0094FF);" title="Голубой"></div>
+            <div class="accent-opt" data-accent="#FF4444,#CC0000" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#FF4444,#CC0000);" title="Красный"></div>
+            <div class="accent-opt" data-accent="#F0F0F0,#AAAAAA" onclick="applyAccent(this)" style="background:linear-gradient(135deg,#F0F0F0,#AAAAAA);" title="Белый"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+            <label style="font-size:11px;color:var(--text3);">СВОЙ ЦВЕТ:</label>
+            <input type="color" id="custom-accent-color" value="#FFB830" onchange="applyCustomAccent(this.value)" style="width:36px;height:28px;border:none;border-radius:6px;cursor:pointer;background:none;padding:0;">
+          </div>
+        </div>
+
+        <!-- ТЕМА ФОН -->
+        <div class="form-group">
+          <label class="form-label">ТЕМА ФОНА</label>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:6px;" id="bg-theme-picker">
+            <div class="bg-theme-opt selected" data-theme="summer" onclick="applyBgTheme(this)">
+              <div style="height:40px;border-radius:6px 6px 0 0;background:linear-gradient(to bottom,#071525,#1A5A8A,#7EC8DA);"></div>
+              <div class="bg-theme-label">☀️ Лето</div>
+            </div>
+            <div class="bg-theme-opt" data-theme="night" onclick="applyBgTheme(this)">
+              <div style="height:40px;border-radius:6px 6px 0 0;background:linear-gradient(to bottom,#000010,#0A0A2E,#0D0D35);"></div>
+              <div class="bg-theme-label">🌃 Ночь</div>
+            </div>
+            <div class="bg-theme-opt" data-theme="forest" onclick="applyBgTheme(this)">
+              <div style="height:40px;border-radius:6px 6px 0 0;background:linear-gradient(to bottom,#0A1A0A,#1A3A1A,#2A5A2A);"></div>
+              <div class="bg-theme-label">🌲 Лес</div>
+            </div>
+            <div class="bg-theme-opt" data-theme="sunset" onclick="applyBgTheme(this)">
+              <div style="height:40px;border-radius:6px 6px 0 0;background:linear-gradient(to bottom,#1A0A0A,#3A1A0A,#FF4500 150%);"></div>
+              <div class="bg-theme-label">🌅 Закат</div>
+            </div>
+            <div class="bg-theme-opt" data-theme="ocean" onclick="applyBgTheme(this)">
+              <div style="height:40px;border-radius:6px 6px 0 0;background:linear-gradient(to bottom,#000820,#001840,#003060);"></div>
+              <div class="bg-theme-label">🌊 Океан</div>
+            </div>
+            <div class="bg-theme-opt" data-theme="void" onclick="applyBgTheme(this)">
+              <div style="height:40px;border-radius:6px 6px 0 0;background:#000;"></div>
+              <div class="bg-theme-label">⬛ Пустота</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ШРИФТ -->
+        <div class="form-group">
+          <label class="form-label">ШРИФТ ИНТЕРФЕЙСА</label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+            <button class="font-opt selected" data-font="system" onclick="applyFont(this)">System</button>
+            <button class="font-opt" data-font="mono" onclick="applyFont(this)" style="font-family:monospace;">Monospace</button>
+            <button class="font-opt" data-font="serif" onclick="applyFont(this)" style="font-family:Georgia,serif;">Serif</button>
+            <button class="font-opt" data-font="rounded" onclick="applyFont(this)" style="font-family:'Trebuchet MS',sans-serif;">Rounded</button>
+          </div>
+        </div>
+
+        <!-- РАЗМЕР ШРИФТА -->
+        <div class="form-group">
+          <label class="form-label">РАЗМЕР ТЕКСТА: <span id="font-size-val">14px</span></label>
+          <input type="range" id="font-size-slider" min="12" max="18" value="14" step="1"
+            oninput="applyFontSize(this.value)"
+            style="width:100%;margin-top:8px;accent-color:var(--accent);">
+        </div>
+
+        <!-- РАДИУС КАРТОЧЕК -->
+        <div class="form-group">
+          <label class="form-label">СКРУГЛЕНИЕ КАРТОЧЕК: <span id="radius-val">12px</span></label>
+          <input type="range" id="radius-slider" min="0" max="24" value="12" step="2"
+            oninput="applyRadius(this.value)"
+            style="width:100%;margin-top:8px;accent-color:var(--accent);">
+        </div>
+
+        <!-- ПРОЗРАЧНОСТЬ КАРТОЧЕК -->
+        <div class="form-group">
+          <label class="form-label">ПРОЗРАЧНОСТЬ КАРТОЧЕК: <span id="card-opacity-val">85%</span></label>
+          <input type="range" id="card-opacity-slider" min="20" max="100" value="85" step="5"
+            oninput="applyCardOpacity(this.value)"
+            style="width:100%;margin-top:8px;accent-color:var(--accent);">
+        </div>
+
+        <!-- АНИМАЦИЯ ФОНА -->
+        <div class="form-group">
+          <label class="form-label">СКОРОСТЬ АНИМАЦИИ ФОНА</label>
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <button class="anim-opt" data-speed="0.5" onclick="applyAnimSpeed(this)">🐢 Медленно</button>
+            <button class="anim-opt selected" data-speed="1" onclick="applyAnimSpeed(this)">▶️ Нормально</button>
+            <button class="anim-opt" data-speed="2" onclick="applyAnimSpeed(this)">⚡ Быстро</button>
+            <button class="anim-opt" data-speed="0" onclick="applyAnimSpeed(this)">⏸ Стоп</button>
+          </div>
+        </div>
+
+        <!-- КОМПАКТНЫЙ РЕЖИМ -->
+        <div class="form-group">
+          <label class="form-label">РЕЖИМ ОТОБРАЖЕНИЯ</label>
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <button class="layout-opt selected" data-layout="normal" onclick="applyLayout(this)">📋 Обычный</button>
+            <button class="layout-opt" data-layout="compact" onclick="applyLayout(this)">📄 Компактный</button>
+            <button class="layout-opt" data-layout="wide" onclick="applyLayout(this)">🖥 Широкий</button>
+          </div>
+        </div>
+
+        <!-- КАСТОМНЫЙ CSS -->
+        <div class="form-group">
+          <label class="form-label">СВОЙ CSS (продвинутым)</label>
+          <textarea id="custom-css-input" class="form-input" rows="4"
+            placeholder=".post-card { border-radius: 0; }&#10;.sidebar { opacity: 0.9; }"
+            style="font-family:monospace;font-size:11px;resize:vertical;"
+            oninput="applyCustomCSS(this.value)"></textarea>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">Применяется сразу. Сбрасывается при обновлении.</div>
+        </div>
+
+        <button onclick="resetCustomization()" style="width:100%;padding:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;cursor:pointer;margin-bottom:8px;">↺ СБРОСИТЬ ВСЕ НАСТРОЙКИ ИНТЕРФЕЙСА</button>
+
         <hr class="divider">
         <button onclick="logout()" style="width:100%;padding:11px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:8px;color:#ff6464;font-size:13px;cursor:pointer;" data-i18n="logout">Выйти из аккаунта</button>
       </div>
@@ -1768,7 +1990,8 @@ document.addEventListener('click', e => {
 let state = {
   users: [], posts: [], projects: [],
   currentUser: null, experimentMode: false,
-  selectedAvatar:'🤖', selectedProjectIcon:'🎬', selectedSettingsAvatar:null
+  selectedAvatar:'🤖', selectedProjectIcon:'🎬', selectedSettingsAvatar:null,
+  following: {}  // { userId: [followedUserId, ...] }
 };
 
 // Two separate storage keys: public data vs session
@@ -1791,28 +2014,59 @@ function loadState() {
       state.posts    = parsed.posts    || [];
       state.projects = parsed.projects || [];
     }
-  } catch(e) { state.users=[]; state.posts=[]; state.projects=[]; }
+  } catch(e) {
+    console.warn('[loadState] parse error, resetting:', e);
+    state.users=[]; state.posts=[]; state.projects=[];
+    localStorage.removeItem(KEY_DATA);
+  }
 
-  // Seed demo content only once (no users = fresh install)
-  if(!state.users.length) seedData();
+  // Seed only when truly empty (fresh install, not after logout)
+  if(!state.users.length) {
+    seedData();
+  } else {
+    // Ensure KDCHD OFFICIAL is always in the list (but don't overwrite other users)
+    const hasOfficial = state.users.find(u => u.id === 'u0');
+    if(!hasOfficial) {
+      state.users.unshift({
+        id:'u0', nick:'KDCHD OFFICIAL', passHash:hashPass('kdchd_secret_2026'),
+        avatar:'🌐', desc:'Официальный аккаунт KDCHD NETWORK.', status:'🌐 Создаю проект',
+        weirdness:10, verified:true,
+      });
+    }
+  }
 
   try {
     const sess = localStorage.getItem(KEY_SESSION);
-    if(sess) state.currentUser = JSON.parse(sess).uid || null;
-  } catch(e) {}
+    if(sess) {
+      const uid = JSON.parse(sess).uid;
+      // Verify the user still exists before restoring session
+      if(uid && state.users.find(u => u.id === uid)) {
+        state.currentUser = uid;
+      } else {
+        localStorage.removeItem(KEY_SESSION);
+      }
+    }
+  } catch(e) { localStorage.removeItem(KEY_SESSION); }
 }
 
 function saveState() {
   try {
-    // Save data without exposing anything sensitive beyond hashed pw
     localStorage.setItem(KEY_DATA, JSON.stringify({
-      users:    state.users.map(u=>({ id:u.id, nick:u.nick, passHash:u.passHash,
-                  avatar:u.avatar, bannerUrl:u.bannerUrl||null,
-                  desc:u.desc, status:u.status, weirdness:u.weirdness })),
+      users: state.users.map(u=>({
+        id:         u.id,
+        nick:       u.nick,
+        passHash:   u.passHash,
+        avatar:     u.avatar,
+        bannerUrl:  u.bannerUrl  || null,
+        desc:       u.desc       || '',
+        status:     u.status     || '',
+        weirdness:  u.weirdness  || 1,
+        verified:   u.verified   || false,
+      })),
       posts:    state.posts,
       projects: state.projects,
     }));
-  } catch(e) {}
+  } catch(e) { console.warn('[saveState]', e); }
 }
 
 function saveSession() {
@@ -1928,6 +2182,11 @@ function doRegister() {
 function logout() {
   state.currentUser = null;
   saveSession();
+  // Unsubscribe Firestore follow listener
+  if(_followUnsub) { _followUnsub(); _followUnsub = null; }
+  _followCache = {};
+  _followersCache = {};
+  _viewingUserId = null;
   document.getElementById('screen-app').classList.remove('active');
   document.getElementById('screen-app').style.display='none';
   document.getElementById('screen-auth').classList.add('active');
@@ -1948,6 +2207,19 @@ function enterApp() {
   renderQR();
   applyLang();
   loadSettings();
+  // Start Firestore follow sync
+  const cu = getCurrentUser();
+  if(cu) {
+    // Small delay to ensure _fb is ready
+    const trySubscribe = () => {
+      if(window._fb && window._fb.onSnapshot) {
+        subscribeToFollows(cu.id);
+      } else {
+        setTimeout(trySubscribe, 300);
+      }
+    };
+    trySubscribe();
+  }
 }
 
 function getCurrentUser() { return state.users.find(u=>u.id===state.currentUser); }
@@ -1998,6 +2270,352 @@ function showPage(id) {
 
 function toggleSidebar() {
   document.getElementById('sidebar')?.classList.toggle('open');
+}
+
+// ========== КАСТОМИЗАЦИЯ ИНТЕРФЕЙСА ==========
+let _customCSS_el = null;
+window._bgAnimSpeed = 1;
+
+const UI_PREFS_KEY = 'kdchd_ui_prefs';
+
+function loadUIPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem(UI_PREFS_KEY) || '{}');
+    if(p.accent)      applyAccentValues(p.accent[0], p.accent[1]);
+    if(p.bgTheme)     applyBgThemeByName(p.bgTheme);
+    if(p.font)        applyFontByName(p.font);
+    if(p.fontSize)    applyFontSize(p.fontSize, false);
+    if(p.radius)      applyRadius(p.radius, false);
+    if(p.cardOpacity) applyCardOpacity(p.cardOpacity, false);
+    if(p.animSpeed !== undefined) setAnimSpeed(p.animSpeed);
+    if(p.layout)      applyLayoutByName(p.layout);
+    if(p.customCSS)   applyCustomCSS(p.customCSS, false);
+  } catch(e) {}
+}
+function saveUIPrefs(key, val) {
+  try { const p=JSON.parse(localStorage.getItem(UI_PREFS_KEY)||'{}'); p[key]=val; localStorage.setItem(UI_PREFS_KEY,JSON.stringify(p)); } catch(e) {}
+}
+
+function applyAccent(el) {
+  document.querySelectorAll('.accent-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  const [c1,c2] = el.dataset.accent.split(',');
+  applyAccentValues(c1,c2); saveUIPrefs('accent',[c1,c2]);
+}
+function applyCustomAccent(val) {
+  document.querySelectorAll('.accent-opt').forEach(o=>o.classList.remove('selected'));
+  applyAccentValues(val,val); saveUIPrefs('accent',[val,val]);
+}
+function applyAccentValues(c1,c2) {
+  const r=document.documentElement;
+  r.style.setProperty('--accent',c1); r.style.setProperty('--accent2',c2);
+  r.style.setProperty('--glow',hexToRgba(c1,0.20)); r.style.setProperty('--glowS',hexToRgba(c1,0.10));
+  r.style.setProperty('--border2',hexToRgba(c1,0.30));
+  const inp=document.getElementById('custom-accent-color'); if(inp) inp.value=c1;
+}
+function hexToRgba(hex,alpha) {
+  const r=parseInt(hex.slice(1,3),16)||255,g=parseInt(hex.slice(3,5),16)||184,b=parseInt(hex.slice(5,7),16)||48;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+const BG_THEMES = {
+  summer:{from:'#071525',mid:'#0f2040',to:'#7EC8DA'},
+  night: {from:'#000010',mid:'#0A0A2E',to:'#0D0D35'},
+  forest:{from:'#0A1A0A',mid:'#1A3A1A',to:'#2A5A2A'},
+  sunset:{from:'#1A0A0A',mid:'#3A1A0A',to:'#4A2A0A'},
+  ocean: {from:'#000820',mid:'#001840',to:'#003060'},
+  void:  {from:'#000000',mid:'#050505',to:'#0A0A0A'},
+};
+function applyBgTheme(el) {
+  document.querySelectorAll('.bg-theme-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  applyBgThemeByName(el.dataset.theme); saveUIPrefs('bgTheme',el.dataset.theme);
+}
+function applyBgThemeByName(name) {
+  const t=BG_THEMES[name]; if(!t) return;
+  document.documentElement.style.setProperty('--bg',t.mid);
+  document.documentElement.style.setProperty('--bg2',t.from);
+  document.body.style.background=t.from;
+  window._bgTheme=t;
+  const el=document.querySelector(`.bg-theme-opt[data-theme="${name}"]`);
+  if(el){document.querySelectorAll('.bg-theme-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}
+}
+
+const FONTS = {
+  system: "-apple-system,'Segoe UI',system-ui,sans-serif",
+  mono:   "'Courier New',Courier,monospace",
+  serif:  "Georgia,'Times New Roman',serif",
+  rounded:"'Trebuchet MS',Arial,sans-serif",
+};
+function applyFont(el) {
+  document.querySelectorAll('.font-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  applyFontByName(el.dataset.font); saveUIPrefs('font',el.dataset.font);
+}
+function applyFontByName(name) {
+  document.body.style.fontFamily=FONTS[name]||FONTS.system;
+  const el=document.querySelector(`.font-opt[data-font="${name}"]`);
+  if(el){document.querySelectorAll('.font-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}
+}
+
+function applyFontSize(val,save=true) {
+  document.documentElement.style.fontSize=val+'px';
+  const l=document.getElementById('font-size-val'); if(l) l.textContent=val+'px';
+  const s=document.getElementById('font-size-slider'); if(s) s.value=val;
+  if(save) saveUIPrefs('fontSize',val);
+}
+function applyRadius(val,save=true) {
+  document.documentElement.style.setProperty('--radius',val+'px');
+  document.documentElement.style.setProperty('--radius-sm',Math.max(0,val-4)+'px');
+  const l=document.getElementById('radius-val'); if(l) l.textContent=val+'px';
+  const s=document.getElementById('radius-slider'); if(s) s.value=val;
+  if(save) saveUIPrefs('radius',val);
+}
+function applyCardOpacity(val,save=true) {
+  document.documentElement.style.setProperty('--card',`rgba(10,24,48,${(val/100).toFixed(2)})`);
+  const l=document.getElementById('card-opacity-val'); if(l) l.textContent=val+'%';
+  const s=document.getElementById('card-opacity-slider'); if(s) s.value=val;
+  if(save) saveUIPrefs('cardOpacity',val);
+}
+function applyAnimSpeed(el) {
+  document.querySelectorAll('.anim-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  setAnimSpeed(parseFloat(el.dataset.speed)); saveUIPrefs('animSpeed',parseFloat(el.dataset.speed));
+}
+function setAnimSpeed(speed) {
+  window._bgAnimSpeed=speed;
+  const el=document.querySelector(`.anim-opt[data-speed="${speed}"]`);
+  if(el){document.querySelectorAll('.anim-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}
+}
+function applyLayout(el) {
+  document.querySelectorAll('.layout-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  applyLayoutByName(el.dataset.layout); saveUIPrefs('layout',el.dataset.layout);
+}
+function applyLayoutByName(name) {
+  document.body.classList.remove('layout-compact','layout-wide');
+  if(name!=='normal') document.body.classList.add('layout-'+name);
+  const el=document.querySelector(`.layout-opt[data-layout="${name}"]`);
+  if(el){document.querySelectorAll('.layout-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}
+}
+function applyCustomCSS(code,save=true) {
+  if(!_customCSS_el){_customCSS_el=document.createElement('style');_customCSS_el.id='user-custom-css';document.head.appendChild(_customCSS_el);}
+  _customCSS_el.textContent=code;
+  if(save){const i=document.getElementById('custom-css-input');if(i)saveUIPrefs('customCSS',i.value);}
+}
+function resetCustomization() {
+  localStorage.removeItem(UI_PREFS_KEY);
+  const r=document.documentElement;
+  ['--accent','--accent2','--glow','--glowS','--border2','--bg','--bg2','--radius','--radius-sm','--card'].forEach(v=>r.style.removeProperty(v));
+  document.body.style.fontFamily=''; document.body.style.background=''; r.style.fontSize='';
+  document.body.classList.remove('layout-compact','layout-wide');
+  if(_customCSS_el) _customCSS_el.textContent='';
+  window._bgAnimSpeed=1;
+  document.querySelectorAll('.accent-opt,.font-opt,.anim-opt,.layout-opt,.bg-theme-opt').forEach(o=>o.classList.remove('selected'));
+  [{s:'.accent-opt[data-accent="#FFB830,#FF8C42"]'},{s:'.font-opt[data-font="system"]'},{s:'.anim-opt[data-speed="1"]'},{s:'.layout-opt[data-layout="normal"]'},{s:'.bg-theme-opt[data-theme="summer"]'}]
+    .forEach(({s})=>{const e=document.querySelector(s);if(e)e.classList.add('selected');});
+  const resets=[['font-size-slider',14,'font-size-val','14px'],['radius-slider',12,'radius-val','12px'],['card-opacity-slider',85,'card-opacity-val','85%']];
+  resets.forEach(([sid,sv,lid,lv])=>{const s=document.getElementById(sid);if(s)s.value=sv;const l=document.getElementById(lid);if(l)l.textContent=lv;});
+  const c=document.getElementById('custom-css-input');if(c)c.value='';
+}
+document.addEventListener('DOMContentLoaded', loadUIPrefs);
+
+// ========== FOLLOW SYSTEM (Firebase Firestore) ==========
+// Firestore structure:
+//   follows/{followerId}_{followedId}  → { followerId, followedId, createdAt }
+// Counters cached locally for fast UI, synced from Firestore.
+
+let _viewingUserId = null;
+let _followCache = {};        // { userId: Set of userIds they follow }
+let _followersCache = {};     // { userId: count }
+let _followUnsub = null;      // active onSnapshot unsubscribe
+
+// ── Helper: doc id for a follow relationship ──────────────
+function followDocId(followerId, followedId) {
+  return followerId + '_' + followedId;
+}
+
+// ── Load follow state for current user from Firestore ─────
+function subscribeToFollows(currentUid) {
+  if(_followUnsub) { _followUnsub(); _followUnsub = null; }
+  if(!window._fb) return;
+  const { db, collection, query, where, onSnapshot } = window._fb;
+  if(!db || !onSnapshot) return;
+
+  // Listen to all follows in the system so we can count followers per user
+  const q = window._fb.collection(db, 'follows');
+  _followUnsub = window._fb.onSnapshot(q, snap => {
+    _followCache = {};
+    _followersCache = {};
+    snap.forEach(d => {
+      const { followerId, followedId } = d.data();
+      if(!_followCache[followerId]) _followCache[followerId] = new Set();
+      _followCache[followerId].add(followedId);
+      _followersCache[followedId] = (_followersCache[followedId] || 0) + 1;
+    });
+    // Update UI counts live
+    const cu = getCurrentUser();
+    if(cu) {
+      const myFollEl = document.getElementById('stat-followers');
+      if(myFollEl) myFollEl.textContent = _followersCache[cu.id] || 0;
+    }
+    if(_viewingUserId) {
+      const uf = document.getElementById('user-stat-followers');
+      if(uf) uf.textContent = _followersCache[_viewingUserId] || 0;
+      updateFollowBtn(_viewingUserId);
+    }
+  }, err => console.warn('[FB follows]', err));
+}
+
+function getFollowers(userId) {
+  return _followersCache[userId] || 0;
+}
+
+function isFollowing(targetId) {
+  const cu = getCurrentUser();
+  if(!cu) return false;
+  return (_followCache[cu.id] || new Set()).has(targetId);
+}
+
+async function toggleFollow() {
+  const cu = getCurrentUser();
+  if(!cu) { alert('Нужно войти в аккаунт'); return; }
+  if(!_viewingUserId) { console.warn('[Follow] _viewingUserId not set'); return; }
+
+  const btn = document.getElementById('follow-btn');
+  if(btn) btn.disabled = true;
+
+  // Optimistic UI update immediately
+  const wasFollowing = isFollowing(_viewingUserId);
+  if(!_followCache[cu.id]) _followCache[cu.id] = new Set();
+  if(wasFollowing) {
+    _followCache[cu.id].delete(_viewingUserId);
+    _followersCache[_viewingUserId] = Math.max(0, (_followersCache[_viewingUserId] || 1) - 1);
+  } else {
+    _followCache[cu.id].add(_viewingUserId);
+    _followersCache[_viewingUserId] = (_followersCache[_viewingUserId] || 0) + 1;
+  }
+  updateFollowBtn(_viewingUserId);
+  const uf = document.getElementById('user-stat-followers');
+  if(uf) uf.textContent = _followersCache[_viewingUserId] || 0;
+
+  // Write to Firestore if available
+  if(window._fb && window._fb.db) {
+    try {
+      const { db, doc: fbDoc, setDoc: fbSet, deleteDoc: fbDel, serverTimestamp: fbTs } = window._fb;
+      const fid = cu.id + '_' + _viewingUserId;
+      const ref = fbDoc(db, 'follows', fid);
+      if(wasFollowing) {
+        await fbDel(ref);
+      } else {
+        await fbSet(ref, {
+          followerId:   cu.id,
+          followerNick: cu.nick || cu.id,
+          followedId:   _viewingUserId,
+          createdAt:    fbTs(),
+        });
+      }
+    } catch(e) {
+      console.warn('[FB toggleFollow]', e);
+      // Revert optimistic update on error
+      if(wasFollowing) {
+        _followCache[cu.id].add(_viewingUserId);
+        _followersCache[_viewingUserId] = (_followersCache[_viewingUserId] || 0) + 1;
+      } else {
+        _followCache[cu.id].delete(_viewingUserId);
+        _followersCache[_viewingUserId] = Math.max(0, (_followersCache[_viewingUserId] || 1) - 1);
+      }
+      updateFollowBtn(_viewingUserId);
+    }
+  }
+
+  if(btn) btn.disabled = false;
+}
+
+function updateFollowBtn(targetId) {
+  const btn = document.getElementById('follow-btn');
+  if(!btn) return;
+  const following = isFollowing(targetId);
+  btn.innerHTML = following ? '👁 СЛЕЖУ' : '👁 СЛЕДИТЬ';
+  if(following) {
+    btn.style.cssText = 'margin-top:12px;padding:9px 24px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.06em;border:1.5px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text2);transition:all 0.2s;';
+  } else {
+    btn.style.cssText = 'margin-top:12px;padding:9px 24px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.06em;border:1.5px solid var(--accent);background:rgba(255,184,48,0.10);color:var(--accent);transition:all 0.2s;';
+  }
+}
+
+// ========== ЧУЖОЙ ПРОФИЛЬ ==========
+let _prevPage = 'feed';
+
+function openUserProfile(userId) {
+  const cu = getCurrentUser();
+  if(cu && userId === cu.id) { showPage('profile'); return; }
+
+  const user = state.users.find(u => u.id === userId);
+  if(!user) return;
+
+  _prevPage = document.querySelector('.page.active')?.id?.replace('page-','') || 'feed';
+
+  _viewingUserId = userId;
+
+  document.getElementById('user-profile-breadcrumb').textContent = '@' + user.nick;
+  document.getElementById('user-profile-ava').innerHTML = avatarHtml(user.avatar, 60);
+
+  const nameEl = document.getElementById('user-profile-name');
+  nameEl.innerHTML = '@' + escHtml(user.nick) + (user.verified ? ' <span class="verified-badge"></span>' : '');
+
+  document.getElementById('user-profile-desc').textContent = user.desc || '...';
+
+  const statusLabels = {
+    '🎬 Снимаю фильм':'Снимаю фильм','🤖 ИИ эксперимент':'ИИ эксперимент',
+    '🎮 Делаю игру':'Делаю игру','🌐 Создаю проект':'Создаю проект','😭 Забросил проект':'Забросил проект',
+  };
+  document.getElementById('user-profile-status').textContent = statusLabels[user.status] || user.status || '...';
+
+  const userPosts = state.posts.filter(p => p.author === userId);
+  document.getElementById('user-stat-posts').textContent = userPosts.length;
+  document.getElementById('user-stat-followers').textContent = getFollowers(userId);
+  let totalReactions = 0;
+  userPosts.forEach(p => { Object.values(p.reactions||{}).forEach(v => totalReactions += v); });
+  document.getElementById('user-stat-reactions').textContent = totalReactions;
+
+  const hdr = document.getElementById('user-profile-header');
+  if(user.bannerUrl) { hdr.style.backgroundImage=`url(${user.bannerUrl})`; hdr.classList.add('has-banner'); }
+  else { hdr.style.backgroundImage=''; hdr.classList.remove('has-banner'); }
+
+  const postsEl = document.getElementById('user-profile-posts');
+  if(!userPosts.length) {
+    postsEl.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:40px 0;">Постов пока нет</div>';
+  } else {
+    postsEl.innerHTML = userPosts.sort((a,b)=>(b.time||0)-(a.time||0)).map(post => {
+    const tag = tagBadges[post.tag] || tagBadges.idea;
+      return `<div class="post-card">
+        <div class="post-header">
+          <div class="post-ava">${avatarHtml(user.avatar,28)}</div>
+          <div class="post-meta">
+            <div class="post-author">@${escHtml(user.nick)}</div>
+            <div class="post-time">${timeAgo(post)}</div>
+          </div>
+          <span class="post-badge ${tag.cl}">${tag.emoji} ${tag.label[currentLang]||tag.label.ru}</span>
+        </div>
+        <div class="post-text">${escHtml(post.text)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); });
+  const pg = document.getElementById('page-user-profile');
+  pg.style.display = '';
+  pg.classList.add('active');
+  // Update follow button state
+  updateFollowBtn(userId);
+}
+
+function closeUserProfile() {
+  const pg = document.getElementById('page-user-profile');
+  pg.classList.remove('active');
+  pg.style.display = 'none';
+  showPage(_prevPage);
 }
 
 // ========== EXPERIMENT MODE ==========
@@ -2132,7 +2750,7 @@ function renderFeed() {
       <div class="post-header">
         <div class="post-ava">${avatarHtml(author.avatar,28)}</div>
         <div class="post-meta">
-          <div class="post-author"><span class="post-author-wrap">@${escHtml(author.nick)}${author.verified ? '<span class="verified-badge" title="Верифицированный аккаунт"></span>' : ''}</span></div>
+          <div class="post-author"><span class="post-author-wrap" onclick="openUserProfile('${escHtml(post.author)}')" style="cursor:pointer;" title="Открыть профиль">@${escHtml(author.nick)}${author.verified ? '<span class="verified-badge" title="Верифицированный аккаунт"></span>' : ''}</span></div>
           <div class="post-time">${timeAgo(post)}</div>
         </div>
         <span class="post-badge ${tag.cl}">${tag.emoji} ${tag.label[currentLang]||tag.label.ru}</span>
@@ -2487,6 +3105,8 @@ function renderProfile() {
   document.getElementById('stat-posts').textContent = myPosts.length;
   document.getElementById('stat-projects').textContent = myProjs.length;
   document.getElementById('stat-reactions').textContent = myReactions;
+  const follEl = document.getElementById('stat-followers');
+  if(follEl) follEl.textContent = getFollowers(cu.id);
   const pplist = document.getElementById('profile-posts-list');
   if(pplist) {
     if(!myPosts.length) {
@@ -2768,7 +3388,7 @@ import { initializeApp }     from "https://www.gstatic.com/firebasejs/10.12.0/fi
 import { getAnalytics }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import {
   getFirestore, collection, addDoc, doc, getDoc, setDoc, getDocs,
-  onSnapshot, query, orderBy, where, serverTimestamp, Timestamp, updateDoc
+  onSnapshot, query, orderBy, where, serverTimestamp, Timestamp, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -3039,7 +3659,7 @@ window.addProject = async function() {
 setFbStatus(false, 'Подключение...');
 subscribeToFeed();
 subscribeToProjects();
-window._fb = { db, serverTimestamp, updateDoc, doc };
+window._fb = { db, serverTimestamp, updateDoc, doc, setDoc, getDoc, deleteDoc, collection, onSnapshot };
 console.log('[KDCHD] Firebase v0.2 ✓');
 </script>
 <script>
